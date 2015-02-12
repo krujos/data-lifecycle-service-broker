@@ -11,3 +11,10 @@
 - allow remote connections to pg_hba.conf
 - host    all             all             0.0.0.0/0               md5
 - connect w/ plsql or pgadmin and add some test data.
+
+
+#Notes
+The approach where we take a snap of prod, then make an ami, then mount it etc may be a little heavy handed. It works for a demo and POC, but in reality we should be leveraging snaps that are created on some other schedule. 
+
+
+
