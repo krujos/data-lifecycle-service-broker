@@ -1,10 +1,11 @@
 package io.pivotal.cdm.service;
 
+import io.pivotal.aws.AWSHelper;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.IntPredicate;
-import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.log4j.Logger;
 import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
 import org.cloudfoundry.community.servicebroker.exception.ServiceInstanceBindingExistsException;
@@ -15,28 +16,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.ec2.model.*;
 
 @Service
 public class PostgresServiceInstanceBindingService implements
 		ServiceInstanceBindingService {
 
+	private AWSHelper aws;
+
 	private Logger log = Logger
 			.getLogger(PostgresServiceInstanceBindingService.class);
-	private AmazonEC2Client ec2Client;
+
 	private Map<String, Object> creds;
-	private static String instanceId = "i-bf72d345";
+	private static String sourceInstanceId = "i-bf72d345";
 	private static String desc = "CF Service Broker Snapshot Image";
 	private static String subnetId = "subnet-d9b220ae";
+	// Left is instance id, right is ami
+	private Map<String, ImmutablePair<String, String>> instances = new HashMap<String, ImmutablePair<String, String>>();
 
 	@Autowired
 	public PostgresServiceInstanceBindingService(AmazonEC2Client ec2Client) {
-		this.ec2Client = ec2Client;
+		this.aws = new AWSHelper(ec2Client, subnetId);
+
 		creds = new HashMap<String, Object>();
 		creds.put("username", "postgres");
 		creds.put("password", "postgres");
 	}
 
+	/**
+	 * Start up a new EC2 Instance. Create an AMI, then launch the instance.
+	 */
 	@Override
 	public ServiceInstanceBinding createServiceInstanceBinding(
 			String bindingId, ServiceInstance serviceInstance,
@@ -44,75 +52,48 @@ public class PostgresServiceInstanceBindingService implements
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 
-		CreateImageResult imageResult = ec2Client
-				.createImage(new CreateImageRequest()
-						.withInstanceId(instanceId)
-						.withDescription(desc)
-						.withName(instanceId + "-" + System.currentTimeMillis()));
+		String amiId = aws.createAMI(sourceInstanceId, desc);
+		String instance = aws.startEC2Instance(amiId);
 
-		log.info("Created new AMI with ID: " + imageResult.getImageId());
-
-		if (!waitForImage(imageResult)) {
-			throw new ServiceBrokerException(
-					"Timed out waiting for amazon to create AMI");
-		}
-
-		RunInstancesResult instance = ec2Client
-				.runInstances(new RunInstancesRequest()
-						.withImageId(imageResult.getImageId())
-						.withInstanceType("m1.small").withMinCount(1)
-						.withMaxCount(1).withSubnetId(subnetId)
-						.withInstanceType(InstanceType.T2Micro));
-
-		log.info("Started instance:" + getInstanceId(instance));
-
-		return new ServiceInstanceBinding(getInstanceId(instance),
-				serviceInstance.getId(), creds, null, appGuid);
+		instances.put(bindingId, new ImmutablePair<String, String>(instance,
+				amiId));
+		return new ServiceInstanceBinding(bindingId, serviceInstance.getId(),
+				creds, null, appGuid);
 	}
 
-	private String getInstanceId(RunInstancesResult instance) {
-		return instance.getReservation().getInstances().get(0).getInstanceId();
-	}
-
-	private boolean waitForImage(CreateImageResult imageResult) {
-
-		return IntStream.range(0, 5).anyMatch(new IntPredicate() {
-			@Override
-			public boolean test(int i) {
-				String imageState = getImageState(imageResult.getImageId());
-				log.info("Image state is " + imageState);
-				if ("available".equals(imageState)) {
-					return true;
-				}
-				if ("failed".equals(imageState)) {
-					log.error("Failed creating AMI, aws does this sometimes... why");
-					return false;
-				}
-				try {
-					log.info("Waiting 30 more seconds for AMI creation ("
-							+ imageResult.getImageId() + ")");
-					Thread.sleep(30000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				return false;
-			}
-		});
-	}
-
-	private String getImageState(String imageId) {
-		return ec2Client
-				.describeImages(
-						new DescribeImagesRequest().withImageIds(imageId))
-				.getImages().get(0).getState();
-	}
-
+	/**
+	 * Clean up AWS. Terminate instance, deregister AMI and delete snap.
+	 * Terminate deletes the instance volume by default.
+	 * 
+	 */
 	@Override
 	public ServiceInstanceBinding deleteServiceInstanceBinding(
 			String bindingId, ServiceInstance instance, String serviceId,
 			String planId) throws ServiceBrokerException {
-		// TODO Auto-generated method stub
-		return null;
+
+		if (null == instances.get(bindingId)) {
+			log.info(bindingId + " not found");
+			return null;
+		}
+
+		aws.terminateEc2Instance(getEC2InstanceForBinding(bindingId));
+
+		String ami = getAMIForBinding(bindingId);
+		aws.deregisterAMI(ami);
+		aws.deleteSnapshotsForImage(ami);
+
+		return new ServiceInstanceBinding(bindingId, instance.getId(), null,
+				null, null);
+	}
+
+	public String getEC2InstanceForBinding(final String bindingId) {
+		return (null == instances.get(bindingId)) ? null : instances.get(
+				bindingId).getLeft();
+	}
+
+	public String getAMIForBinding(String bindingId) {
+		return (null == instances.get(bindingId)) ? null : instances.get(
+				bindingId).getRight();
 	}
 
 }

@@ -46,22 +46,13 @@ public class ServiceBindingIntegrationTest {
 	}
 
 	@Test
-	public void itCreatesAnAMIAndImage() throws JSONException {
-		JSONObject serviceInstance = new JSONObject();
-		serviceInstance.put("service_id", "postgrescdm");
-		serviceInstance.put("plan_id", "copy");
-		serviceInstance.put("organization_guid", "org_guid");
-		serviceInstance.put("space_guid", "s_guid");
-
+	public void itCreatesAnAMIAndImageAndCleansUp() throws JSONException {
 		JSONObject args = new JSONObject();
 		args.put("service_id", "postgrescmd");
 		args.put("plan_id", "copy");
 		args.put("app_guid", "app_guid");
 
-		given().auth().basic(username, password).and()
-				.contentType("application/json").and()
-				.body(serviceInstance.toString())
-				.put("/v2/service_instances/1234").then().statusCode(201);
+		createServiceInstance();
 
 		given().auth().basic(username, password).and()
 				.contentType("application/json").and().body(args.toString())
@@ -70,5 +61,33 @@ public class ServiceBindingIntegrationTest {
 				.then().statusCode(201);
 
 		// TODO This should inspect AWS to verify success.
+
+		given().auth()
+				.basic(username, password)
+				.delete("/v2/service_instances/1234/service_bindings/1234521?service_id=postgrescdm&plan_id=copy")
+				.then().statusCode(200);
+
+	}
+
+	private void createServiceInstance() throws JSONException {
+		JSONObject serviceInstance = new JSONObject();
+		serviceInstance.put("service_id", "postgrescdm");
+		serviceInstance.put("plan_id", "copy");
+		serviceInstance.put("organization_guid", "org_guid");
+		serviceInstance.put("space_guid", "s_guid");
+		given().auth().basic(username, password).and()
+				.contentType("application/json").and()
+				.body(serviceInstance.toString())
+				.put("/v2/service_instances/1234").then().statusCode(201);
+	}
+
+	@Test
+	public void itShouldBeGoneWhenUnbindingSomethingInvalid()
+			throws JSONException {
+		createServiceInstance();
+		given().auth()
+				.basic(username, password)
+				.delete("/v2/service_instances/1234/service_bindings/nothing?service_id=postgrescdm&plan_id=copy")
+				.then().statusCode(410);
 	}
 }
