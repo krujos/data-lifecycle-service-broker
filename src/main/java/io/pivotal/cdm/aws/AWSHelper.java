@@ -3,9 +3,7 @@ package io.pivotal.cdm.aws;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.apache.log4j.Logger;
 import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
@@ -149,23 +147,21 @@ public class AWSHelper {
 
 	private boolean waitForImage(String imageId) {
 
-		return IntStream.range(0, 5).anyMatch(new IntPredicate() {
-			@Override
-			public boolean test(int i) {
-				String imageState = getImageState(imageId);
-				log.info("Image state is " + imageState);
-				switch (imageState) {
-				case "available":
-					return true;
-				case "failed":
-					return false;
-				default:
-					log.info("Waiting 30s more for AMI " + imageId);
-					sleep();
-				}
+		for (int i = 0; i < 5; i++) {
+			String imageState = getImageState(imageId);
+			log.info("Image state is " + imageState);
+			switch (imageState) {
+			case "available":
+				return true;
+			case "failed":
 				return false;
+			default:
+				log.info("Waiting 30s for AMI " + imageId);
+				sleep();
 			}
-		});
+		}
+		return false;
+
 	}
 
 	private void sleep() {
