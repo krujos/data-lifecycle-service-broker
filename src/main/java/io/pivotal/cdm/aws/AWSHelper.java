@@ -136,7 +136,7 @@ public class AWSHelper {
 		}
 	}
 
-	boolean safeContain(Callable<String> s, String c) {
+	private boolean safeContain(Callable<String> s, String c) {
 		try {
 			return (null == s.call()) ? false : s.call().contains(c);
 		} catch (Exception e) {
