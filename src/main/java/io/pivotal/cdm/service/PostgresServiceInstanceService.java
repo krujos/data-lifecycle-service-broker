@@ -1,11 +1,9 @@
 package io.pivotal.cdm.service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import org.cloudfoundry.community.servicebroker.exception.*;
-import org.cloudfoundry.community.servicebroker.model.ServiceDefinition;
-import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
+import org.cloudfoundry.community.servicebroker.model.*;
 import org.cloudfoundry.community.servicebroker.service.ServiceInstanceService;
 import org.springframework.stereotype.Service;
 
@@ -22,13 +20,13 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 	Map<String, ServiceInstance> instances = new HashMap<String, ServiceInstance>();
 
 	@Override
-	public ServiceInstance createServiceInstance(ServiceDefinition service,
-			String serviceInstanceId, String planId, String organizationGuid,
-			String spaceGuid) throws ServiceInstanceExistsException,
-			ServiceBrokerException {
-		ServiceInstance instance = new ServiceInstance(serviceInstanceId,
-				service.getId(), planId, organizationGuid, spaceGuid, null);
-		instances.put(serviceInstanceId, instance);
+	public ServiceInstance createServiceInstance(
+			CreateServiceInstanceRequest request)
+			throws ServiceInstanceExistsException, ServiceBrokerException {
+
+		ServiceInstance instance = new ServiceInstance(request)
+				.withDashboardUrl("http://www.google.com");
+		instances.put(request.getServiceInstanceId(), instance);
 		return instance;
 	}
 
@@ -48,18 +46,15 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 			String planId) throws ServiceInstanceUpdateNotSupportedException,
 			ServiceBrokerException, ServiceInstanceDoesNotExistException {
 
-		ServiceInstance oldInstance = instances.get(instanceId);
-		if (null == oldInstance) {
+		ServiceInstance instance = instances.get(instanceId);
+		if (null == instance) {
 			throw new ServiceInstanceDoesNotExistException(instanceId);
 		}
 
-		instances.put(
-				instanceId,
-				new ServiceInstance(instanceId, oldInstance
-						.getServiceDefinitionId(), planId, oldInstance
-						.getOrganizationGuid(), oldInstance.getSpaceGuid(),
-						oldInstance.getDashboardUrl()));
+		instance.setPlanId(planId);
 
-		return instances.get(instanceId);
+		instances.put(instanceId, instance);
+
+		return instance;
 	}
 }

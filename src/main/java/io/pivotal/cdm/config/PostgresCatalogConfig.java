@@ -3,8 +3,7 @@ package io.pivotal.cdm.config;
 import java.util.*;
 
 import org.cloudfoundry.community.servicebroker.model.*;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
 
 @Configuration
 public class PostgresCatalogConfig {
