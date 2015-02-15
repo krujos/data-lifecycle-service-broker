@@ -24,7 +24,7 @@ import com.jayway.restassured.specification.RequestSpecification;
 @WebAppConfiguration
 @IntegrationTest("server.port:0")
 @Category(IntegrationTest.class)
-public class ServiceBindingIntegrationTest {
+public class BrokerIntegrationTest {
 
 	// TODO DRY w/ Catalog test
 	@Value("${local.server.port}")

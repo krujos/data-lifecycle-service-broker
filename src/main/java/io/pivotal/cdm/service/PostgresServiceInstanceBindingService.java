@@ -1,6 +1,6 @@
 package io.pivotal.cdm.service;
 
-import io.pivotal.aws.AWSHelper;
+import io.pivotal.cdm.aws.AWSHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +40,15 @@ public class PostgresServiceInstanceBindingService implements
 		creds = new HashMap<String, Object>();
 		creds.put("username", "postgres");
 		creds.put("password", "postgres");
+	}
+
+	/**
+	 * Test hook for refactoring. short lived.
+	 * 
+	 * @param aws
+	 */
+	protected void setAWSHelper(final AWSHelper aws) {
+		this.aws = aws;
 	}
 
 	/**

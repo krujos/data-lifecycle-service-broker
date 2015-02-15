@@ -1,4 +1,4 @@
-package io.pivotal.aws;
+package io.pivotal.cdm.aws;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,6 +19,12 @@ public class AWSHelper {
 
 	private String subnetId;
 
+	/**
+	 * Create a new pattern interface to AWS.
+	 * 
+	 * @param ec2Client
+	 * @param subnetId
+	 */
 	public AWSHelper(AmazonEC2Client ec2Client, String subnetId) {
 		this.ec2Client = ec2Client;
 		this.subnetId = subnetId;
@@ -93,6 +99,9 @@ public class AWSHelper {
 	 * leverage is the description field.
 	 * 
 	 * TODO we could make the snap ourselves and track it that way.
+	 * 
+	 * TODO As it stands this method is not very generalizable. Address if
+	 * packaging seperatly.
 	 * 
 	 * @param ami
 	 *            to find associated snaps for
