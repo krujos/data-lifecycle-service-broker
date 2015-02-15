@@ -11,7 +11,7 @@
 
 
 #Running
-Access to AWS is done by using keys for an IAM user. The application code relies on AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY being set to the respective values for this user. 
+Access to AWS is done by using keys for an IAM user. The IAM key needs full EC2 access. The application code relies on AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY being set to the respective values for this user. 
 
 #Notes
 The approach where we take a snap of prod, then make an ami, then mount it etc may be a little heavy handed. It works for a demo and POC, but in reality we should be leveraging snaps that are created on some other schedule. 
