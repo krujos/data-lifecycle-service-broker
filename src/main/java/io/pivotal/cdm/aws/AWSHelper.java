@@ -2,6 +2,7 @@ package io.pivotal.cdm.aws;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -101,7 +102,7 @@ public class AWSHelper {
 	 * TODO we could make the snap ourselves and track it that way.
 	 * 
 	 * TODO As it stands this method is not very generalizable. Address if
-	 * packaging seperatly.
+	 * packaging separately.
 	 * 
 	 * @param ami
 	 *            to find associated snaps for
@@ -109,20 +110,21 @@ public class AWSHelper {
 	 */
 	public void deleteSnapshotsForImage(String ami)
 			throws ServiceBrokerException {
-		if (null == ec2Client.describeSnapshots()) {
+
+		DescribeSnapshotsResult desc = ec2Client.describeSnapshots();
+		if (null == desc.getSnapshots()) {
 			return;
 		}
-		List<Snapshot> snapshots = ec2Client.describeSnapshots().getSnapshots();
+		List<Snapshot> snapshots = desc.getSnapshots();
+
 		// The only way I can find to track the snaps that get created (but not
 		// cleaned up) as part of the ami creation is by the description. This
 		// code is brittle and will probably fail in unexpected and glamorous
 		// ways.
-		List<Snapshot> matching = snapshots
-				.stream()
-				.filter(s -> s.getDescription() != null
-						&& s.getDescription().contains(
-								"Created by CreateImage(i-bf72d345) for " + ami
-										+ " from vol"))
+		String amiDesc = "Created by CreateImage(i-bf72d345) for " + ami
+				+ " from vol";
+		List<Snapshot> matching = snapshots.stream()
+				.filter(s -> safeContain(s::getDescription, amiDesc))
 				.collect(Collectors.toList());
 		if (matching.size() > 1) {
 			throw new ServiceBrokerException(
@@ -136,6 +138,15 @@ public class AWSHelper {
 		}
 	}
 
+	boolean safeContain(Callable<String> s, String c) {
+		try {
+			return (null == s.call()) ? false : s.call().contains(c);
+		} catch (Exception e) {
+			log.error(e);
+		}
+		return false;
+	}
+
 	private boolean waitForImage(String imageId) {
 
 		return IntStream.range(0, 5).anyMatch(new IntPredicate() {
@@ -143,23 +154,26 @@ public class AWSHelper {
 			public boolean test(int i) {
 				String imageState = getImageState(imageId);
 				log.info("Image state is " + imageState);
-				if ("available".equals(imageState)) {
+				switch (imageState) {
+				case "available":
 					return true;
-				}
-				if ("failed".equals(imageState)) {
-					log.error("Failed creating AMI, aws does this sometimes... why?");
+				case "failed":
 					return false;
-				}
-				try {
-					log.info("Waiting 30 more seconds for AMI creation ("
-							+ imageId + ")");
-					Thread.sleep(30000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				default:
+					log.info("Waiting 30s more for AMI " + imageId);
+					sleep();
 				}
 				return false;
 			}
 		});
+	}
+
+	private void sleep() {
+		try {
+			Thread.sleep(30000);
+		} catch (InterruptedException e) {
+			log.error(e);
+		}
 	}
 
 	private String getInstanceId(RunInstancesResult instance) {
@@ -167,9 +181,14 @@ public class AWSHelper {
 	}
 
 	private String getImageState(String imageId) {
-		return ec2Client
-				.describeImages(
-						new DescribeImagesRequest().withImageIds(imageId))
-				.getImages().get(0).getState();
+		String state = "failed";
+		DescribeImagesResult result = ec2Client
+				.describeImages(new DescribeImagesRequest()
+						.withImageIds(imageId));
+		if (null != result && null != result.getImages()
+				&& !result.getImages().isEmpty()) {
+			state = result.getImages().get(0).getState();
+		}
+		return state;
 	}
 }
