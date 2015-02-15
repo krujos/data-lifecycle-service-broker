@@ -1,22 +1,15 @@
 package io.pivotal.cdm.service;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import io.pivotal.cdm.aws.AWSHelper;
 
-import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
-import org.cloudfoundry.community.servicebroker.exception.ServiceInstanceBindingExistsException;
-import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
-import org.cloudfoundry.community.servicebroker.model.ServiceInstanceBinding;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.cloudfoundry.community.servicebroker.exception.*;
+import org.cloudfoundry.community.servicebroker.model.*;
+import org.junit.*;
+import org.mockito.*;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 
@@ -27,7 +20,9 @@ public class PostgresServiceInstanceBindingServiceTest {
 	private PostgresServiceInstanceBindingService bindingService;
 
 	private ServiceInstance serviceInstance = new ServiceInstance(
-			"test_service", "test_service_id", "copy", "1234", "4566", null);
+			new CreateServiceInstanceRequest("test_servicedef", "copy",
+					"test_org", "test_space")
+					.withServiceInstanceId("test_service_instance_id"));
 	private ServiceInstanceBinding bindResult;
 
 	@Before
