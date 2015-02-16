@@ -71,6 +71,12 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.3.2</version>
 		</dependency>
+		<dependency>
+			<groupId>com.github.krujos</groupId>
+			<artifactId>aws-mockito-request-matcher</artifactId>
+			<version>v0.1</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 
@@ -90,6 +96,10 @@
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
+		</repository>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
 		</repository>
 	</repositories>
 	<build>

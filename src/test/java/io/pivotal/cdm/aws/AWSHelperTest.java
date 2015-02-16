@@ -1,20 +1,16 @@
 package io.pivotal.cdm.aws;
 
-import static io.pivotal.cdm.aws.requestmatcher.AWSRequestMatcher.awsRqst;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.krujos.test.aws.request.AWSRequestMatcher.awsRqst;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 
-import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
-import org.cloudfoundry.community.servicebroker.exception.ServiceInstanceBindingExistsException;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.cloudfoundry.community.servicebroker.exception.*;
+import org.junit.*;
+import org.mockito.*;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.*;
