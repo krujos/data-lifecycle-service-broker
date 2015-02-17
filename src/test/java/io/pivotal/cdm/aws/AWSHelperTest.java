@@ -142,4 +142,15 @@ public class AWSHelperTest {
 		verify(ec2Client, never()).deleteSnapshot(any());
 	}
 
+	@Test
+	public void itShouldGetTheInstancePrivateIP() {
+		when(ec2Client.describeInstances(any())).thenReturn(
+				new DescribeInstancesResult()
+						.withReservations(new Reservation()
+								.withInstances(new Instance()
+										.withPrivateIpAddress("1.1.1.2"))));
+
+		assertThat(aws.getEC2InstanceIp(instance.getInstanceId()),
+				is(equalTo("1.1.1.2")));
+	}
 }

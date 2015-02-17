@@ -1,20 +1,18 @@
 package io.pivotal.cdm.servicebinding;
 
 import static com.jayway.restassured.RestAssured.given;
+import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
 import io.pivotal.cdm.CdmServiceBrokerApplication;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.IntegrationTest;
-import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.boot.test.*;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
-import com.amazonaws.util.json.JSONException;
-import com.amazonaws.util.json.JSONObject;
+import com.amazonaws.util.json.*;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.builder.RequestSpecBuilder;
 import com.jayway.restassured.specification.RequestSpecification;
@@ -49,13 +47,13 @@ public class BrokerIntegrationTest {
 	public void itCreatesAnAMIAndImageAndCleansUp() throws JSONException {
 		JSONObject args = new JSONObject();
 		args.put("service_id", "postgrescmd");
-		args.put("plan_id", "copy");
+		args.put("plan_id", COPY);
 		args.put("app_guid", "app_guid");
 
 		createServiceInstance();
 
 		given().auth().basic(username, password).and()
-				.contentType("application/json").and().body(args.toString())
+				.contentType("application/json").and().content(args.toString())
 				.and()
 				.put("/v2/service_instances/1234/service_bindings/1234521")
 				.then().statusCode(201);

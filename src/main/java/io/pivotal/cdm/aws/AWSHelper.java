@@ -1,7 +1,6 @@
 package io.pivotal.cdm.aws;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -186,5 +185,13 @@ public class AWSHelper {
 			state = result.getImages().get(0).getState();
 		}
 		return state;
+	}
+
+	public String getEC2InstanceIp(String instance) {
+		DescribeInstancesResult result = ec2Client
+				.describeInstances(new DescribeInstancesRequest()
+						.withInstanceIds(instance));
+		return result.getReservations().get(0).getInstances().get(0)
+				.getPrivateIpAddress();
 	}
 }

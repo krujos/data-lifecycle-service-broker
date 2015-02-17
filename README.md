@@ -22,17 +22,22 @@ The approach where we take a snap of prod, then make an ami, then mount it etc m
 ##Catalog
 The catalog endpoint offers up two plans. <code>Production</code> works as any normal brokered connection to a database does. Credentials are inserted to your environment and then you modify production data. <code>Copy</code> is slightly more devious. This will provision a new VM and copy of the database from a snapshot. The credentials are then inserted, but the data and virtual machine live only as long as the binding lives. 
 
-#Tests
-This project separates unit and integration tests by using the maven surefire and failsafe plugins. The integration tests need the following environment variables set in order to run.
-
+#Deployment
+Set the following environment variables. 
 ```
-	 SECURITY_USER_NAME  
-	 SECURITY_USER_PASSWORD
+	 SECURITY_USER_NAME  #service broker username
+	 SECURITY_USER_PASSWORD #service broker password
 	 AWS_ACCESS_KEY_ID
 	 AWS_SECRET_ACCESS_KEY
+	 PG_USER #postgres user
+	 PG_PASSWORD #postgres password
+	 PG_URI #the postgres connection uri
 ```
 
 The username and password are passed the the service broker api calls. Both the broker and test source these out of the environment, so you can use whatever you want for both values. The AWS variables should come from an IAM user. These tests will start and stop VM's, as well as create and delete snapshots and AMI's in AWS. 
+
+#Tests
+This project separates unit and integration tests by using the maven surefire and failsafe plugins. The integration tests need environment variables described in the deployment section.
 
 From the command line: 
 
