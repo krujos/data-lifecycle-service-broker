@@ -32,6 +32,9 @@ Set the following environment variables.
 	 PG_USER #postgres user
 	 PG_PASSWORD #postgres password
 	 PG_URI #the postgres connection uri
+	 SUBNET_ID #the was subnet to deploy copy instances into.
+	 SOURCE_INSTANCE_ID #the AWS source instance ID.
+	 
 ```
 
 The username and password are passed the the service broker api calls. Both the broker and test source these out of the environment, so you can use whatever you want for both values. The AWS variables should come from an IAM user. These tests will start and stop VM's, as well as create and delete snapshots and AMI's in AWS. 

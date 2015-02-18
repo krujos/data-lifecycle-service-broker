@@ -22,9 +22,15 @@ public class PostgresServiceInstanceBindingServiceConfig {
 	@Value("#{environment.PG_URI}")
 	private String pgURI;
 
+	@Value("{environment.SOURCE_INSTANCE_ID}")
+	private static String sourceInstanceId;
+
+	@Value("{environemnt.SUBNET_ID}")
+	private static String subnet;
+
 	@Bean
 	PostgresServiceInstanceBindingService postgresServiceInstanceBindingService() {
 		return new PostgresServiceInstanceBindingService(ec2Client, pgUsername,
-				pgPassword, pgURI);
+				pgPassword, pgURI, sourceInstanceId, subnet);
 	}
 }

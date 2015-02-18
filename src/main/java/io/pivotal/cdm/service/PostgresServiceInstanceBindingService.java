@@ -27,14 +27,12 @@ public class PostgresServiceInstanceBindingService implements
 
 	private Map<String, Object> creds;
 
-	private static String sourceInstanceId = "i-bf72d345";
-
 	private static String desc = "CF Service Broker Snapshot Image";
-
-	private static String subnetId = "subnet-d9b220ae";
 
 	// Left is instance id, right is ami
 	private Map<String, ImmutablePair<String, String>> instances = new HashMap<String, ImmutablePair<String, String>>();
+
+	private String sourceInstanceId;
 
 	/**
 	 * Build a new binding service.
@@ -49,16 +47,21 @@ public class PostgresServiceInstanceBindingService implements
 	 *            pointing to the production instance
 	 */
 	@Autowired
-	public PostgresServiceInstanceBindingService(AmazonEC2Client ec2Client,
+	public PostgresServiceInstanceBindingService(
+			AmazonEC2Client ec2Client,
 			@Value("#{environment.PG_USER}") String pgUsername,
 			@Value("#{environment.PG_PASSWORD}") String pgPassword,
-			@Value("#{environment.PG_URI}") String pgURI) {
+			@Value("#{environment.PG_URI}") String pgURI,
+			@Value("#{environment.SOURCE_INSTANCE_ID}") String sourceInstanceId,
+			@Value("#{environment.SUBNET_ID}") String subnetId) {
 		this.aws = new AWSHelper(ec2Client, subnetId);
 
 		creds = new HashMap<String, Object>();
 		creds.put("username", pgUsername);
 		creds.put("password", pgPassword);
 		creds.put("uri", pgURI);
+		this.sourceInstanceId = sourceInstanceId;
+
 	}
 
 	/**

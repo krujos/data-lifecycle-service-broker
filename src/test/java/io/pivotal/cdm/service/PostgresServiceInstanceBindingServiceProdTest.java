@@ -33,6 +33,10 @@ public class PostgresServiceInstanceBindingServiceProdTest {
 
 	private String serviceId = "postgrescmd";
 
+	private String sourceInstanceId = "source-instance";
+
+	private String subnet = "test_subnet";
+
 	@Mock
 	AWSHelper aws;
 
@@ -43,13 +47,13 @@ public class PostgresServiceInstanceBindingServiceProdTest {
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		bindingService = new PostgresServiceInstanceBindingService(ec2Client,
-				pgUsername, pgPassword, pgURI);
+				pgUsername, pgPassword, pgURI, sourceInstanceId, subnet);
 		bindingService.setAWSHelper(aws);
 		bindResult = bindingService.createServiceInstanceBinding(bindingId,
 				serviceInstance, serviceId, PRODUCTION, "test_app");
 		assertThat(bindResult.getId(), is(equalTo(bindingId)));
 		assertThat(bindingService.getEC2InstanceForBinding(bindingId),
-				is(equalTo("i-bf72d345")));
+				is(equalTo(sourceInstanceId)));
 		assertThat(bindingService.getAMIForBinding(bindingId),
 				is(equalTo(PRODUCTION)));
 	}

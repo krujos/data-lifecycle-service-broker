@@ -29,22 +29,26 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	@Mock
 	AWSHelper aws;
 
-	private String pgUsername = "pgUser";
+	private static String pgUsername = "pgUser";
 
-	private String pgPassword = "pgPass";
+	private static String pgPassword = "pgPass";
 
-	private String pgURI = "postgres://10.10.10.10/db/test";
+	private static String pgURI = "postgres://10.10.10.10/db/test";
 
-	private String bindingId = "test_binding_copy";
+	private static String bindingId = "test_binding_copy";
 
-	private String serviceId = "service_id";
+	private static String serviceId = "service_id";
+
+	private static String sourceInstanceId = "source_instance";
+
+	private static String subnet = "test_subnet";
 
 	@Before
 	public void setUp() throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		bindingService = new PostgresServiceInstanceBindingService(ec2Client,
-				pgUsername, pgPassword, pgURI);
+				pgUsername, pgPassword, pgURI, sourceInstanceId, subnet);
 		bindingService.setAWSHelper(aws);
 		when(aws.createAMI(any(), any())).thenReturn("test_ami");
 		when(aws.startEC2Instance("test_ami")).thenReturn("test_ec2instance");
