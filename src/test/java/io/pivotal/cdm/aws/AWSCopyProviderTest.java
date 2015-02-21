@@ -24,7 +24,7 @@ public class AWSCopyProviderTest {
 
 	private String pgUser = "pgUser";
 	private String pgPass = "pgPass";
-	private String pgURI = "postgres://pgUser:pgPass@10.10.10.10/testdb";
+	private String pgURI = "postgres://pgUser:pgPass@10.10.10.10:5432/testdb";
 
 	@Before
 	public void setUp() throws ServiceBrokerException {
@@ -65,7 +65,7 @@ public class AWSCopyProviderTest {
 			throws ServiceBrokerException {
 		when(aws.getEC2InstanceIp("test_instance")).thenReturn("2.2.2.2");
 		Map<String, Object> creds = provider.getCreds("test_instance");
-		assertThat("postgres://pgUser:pgPass@2.2.2.2/testdb",
+		assertThat("postgres://pgUser:pgPass@2.2.2.2:5432/testdb",
 				is(equalTo(creds.get("uri"))));
 	}
 
