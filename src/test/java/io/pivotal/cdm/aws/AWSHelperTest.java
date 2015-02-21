@@ -7,6 +7,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeoutException;
 
 import org.cloudfoundry.community.servicebroker.exception.*;
 import org.junit.*;
@@ -65,10 +66,10 @@ public class AWSHelperTest {
 	}
 
 	// TODO this should not throw a service broker exception.
-	@Test(expected = ServiceBrokerException.class)
+	@Test(expected = TimeoutException.class)
 	public void itShouldFailWhenImageStateIsFailed()
 			throws ServiceInstanceBindingExistsException,
-			ServiceBrokerException {
+			ServiceBrokerException, TimeoutException {
 		when(ec2Client.createImage(any())).thenReturn(
 				new CreateImageResult().withImageId("test_image"));
 

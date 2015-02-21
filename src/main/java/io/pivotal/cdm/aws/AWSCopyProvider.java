@@ -5,6 +5,7 @@ import io.pivotal.cdm.provider.CopyProvider;
 
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
@@ -45,7 +46,12 @@ public class AWSCopyProvider implements CopyProvider {
 	@Override
 	public String createCopy(String instanceId) throws ServiceBrokerException {
 		log.info("Creating copy instance " + instanceId);
-		String amiId = aws.createAMI(instanceId, description);
+		String amiId;
+		try {
+			amiId = aws.createAMI(instanceId, description);
+		} catch (TimeoutException e) {
+			throw new ServiceBrokerException(e);
+		}
 		String instance = aws.startEC2Instance(amiId);
 		instanceImages.put(instance, amiId);
 		return instance;

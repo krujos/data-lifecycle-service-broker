@@ -2,9 +2,11 @@ package io.pivotal.cdm.aws;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
 import org.junit.*;
@@ -27,7 +29,7 @@ public class AWSCopyProviderTest {
 	private String pgURI = "postgres://pgUser:pgPass@10.10.10.10:5432/testdb";
 
 	@Before
-	public void setUp() throws ServiceBrokerException {
+	public void setUp() throws ServiceBrokerException, TimeoutException {
 		MockitoAnnotations.initMocks(this);
 		// TODO, need to get the aws helper in there.
 		provider = new AWSCopyProvider(aws, pgUser, pgPass, pgURI,
@@ -90,6 +92,14 @@ public class AWSCopyProviderTest {
 			throws ServiceBrokerException {
 		itShouldCleanUpWhenDeletingTheCopy();
 		assertNull(provider.getCreds("test_instance"));
+
+	}
+
+	@Test(expected = ServiceBrokerException.class)
+	public void itWrapsAWSHelperExceptions() throws TimeoutException,
+			ServiceBrokerException {
+		when(aws.createAMI(any(), any())).thenThrow(new TimeoutException());
+		provider.createCopy("sourceInstance");
 
 	}
 }

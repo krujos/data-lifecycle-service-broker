@@ -1,7 +1,7 @@
 package io.pivotal.cdm.aws;
 
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -77,13 +77,13 @@ public class AWSHelper {
 	 * @param description
 	 *            to shove in the console so you know what your looking at
 	 * @return id of the ami
-	 * @throws ServiceBrokerException
+	 * @throws TimeoutException
 	 *             if the ami isn't available in time.
 	 * 
 	 * @see #deleteSnapshotsForImage(String)
 	 */
 	public String createAMI(String sourceInstance, String description)
-			throws ServiceBrokerException {
+			throws TimeoutException {
 		CreateImageResult imageResult = ec2Client
 				.createImage(new CreateImageRequest()
 						.withInstanceId(sourceInstance)
@@ -94,7 +94,7 @@ public class AWSHelper {
 
 		String amiId = imageResult.getImageId();
 		if (!waitForImage(amiId)) {
-			throw new ServiceBrokerException(
+			throw new TimeoutException(
 					"Timed out waiting for amazon to create AMI " + amiId);
 		}
 		log.info("Created new AMI with ID: " + amiId);
