@@ -26,8 +26,8 @@ public class AWSCopyProviderConfig {
 
 	@Bean
 	CopyProvider copyProvider() {
-		return new AWSCopyProvider(new AWSHelper(ec2Client, subnetId),
-				username, password, uri, sourceInstance);
+		return new AWSCopyProvider(new AWSHelper(ec2Client, subnetId,
+				sourceInstance), username, password, uri, sourceInstance);
 
 	}
 }

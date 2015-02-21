@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 import org.cloudfoundry.community.servicebroker.exception.*;
 import org.junit.*;
@@ -35,7 +36,7 @@ public class AWSHelperTest {
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
-		aws = new AWSHelper(ec2Client, "test_subnet");
+		aws = new AWSHelper(ec2Client, "test_subnet", "source_instance");
 	}
 
 	@Test
@@ -80,7 +81,7 @@ public class AWSHelperTest {
 	}
 
 	@Test
-	public void itShouldTerminateTheInstanceUponUnbind() {
+	public void itShouldTerminateTheInstance() {
 
 		aws.terminateEc2Instance("test_instance");
 
@@ -92,14 +93,14 @@ public class AWSHelperTest {
 	}
 
 	@Test
-	public void itShouldDeregisterTheAMIUponUnbind() {
+	public void itShouldDeregisterTheAMI() {
 		aws.deregisterAMI("test_image");
 		verify(ec2Client).deregisterImage(
 				awsRqst(r -> r.getImageId().equals("test_image")));
 	}
 
 	@Test
-	public void itShouldDeleteTheSnapShotUponUnbind()
+	public void itShouldDeleteTheStorageArtifacts()
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 
@@ -107,18 +108,39 @@ public class AWSHelperTest {
 				.thenReturn(
 						new DescribeSnapshotsResult().withSnapshots(Arrays.asList(
 								new Snapshot()
-										.withDescription("Created by CreateImage(i-bf72d345) for ami-9687d2fe from vol-e7526fac"),
+										.withDescription("Created by CreateImage(source_instance) for ami-9687d2fe from vol-e7526fac"),
 								new Snapshot()
 										.withDescription(
-												"Created by CreateImage(i-bf72d345) for test_image from vol-e7526fac")
+												"Created by CreateImage(source_instance) for test_image from vol-e7526fac")
 										.withSnapshotId("test_snapshot"),
 								new Snapshot()
 										.withDescription("Created by CreateImage(i-bf72d345) for ami-xx from vol-e7526fac"),
 								new Snapshot())));
-		aws.deleteSnapshotsForImage("test_image");
+
+		Predicate<DescribeVolumesRequest> pred = new Predicate<DescribeVolumesRequest>() {
+			@Override
+			public boolean test(DescribeVolumesRequest r) {
+				Filter filter = r.getFilters().stream().findFirst().get();
+				return filter.getName().equals("snapshot-id")
+						&& filter.getValues().stream().findFirst().get()
+								.equals("test_snapshot");
+			}
+		};
+
+		DescribeVolumesResult volumesResult = new DescribeVolumesResult()
+				.withVolumes(Arrays.asList(new Volume()
+						.withVolumeId("test_volume")));
+
+		when(ec2Client.describeVolumes(awsRqst(pred)))
+				.thenReturn(volumesResult);
+
+		aws.deleteStorageArtifacts("test_image");
 
 		verify(ec2Client).deleteSnapshot(
 				awsRqst(r -> r.getSnapshotId().equals("test_snapshot")));
+
+		verify(ec2Client).deleteVolume(
+				awsRqst(r -> r.getVolumeId().equals("test_volume")));
 
 	}
 
@@ -131,15 +153,15 @@ public class AWSHelperTest {
 				.thenReturn(
 						new DescribeSnapshotsResult().withSnapshots(Arrays.asList(
 								new Snapshot()
-										.withDescription("Created by CreateImage(i-bf72d345) for test_image from vol-e7526fac"),
+										.withDescription("Created by CreateImage(source_instance) for test_image from vol-e7526fac"),
 								new Snapshot()
 										.withDescription(
-												"Created by CreateImage(i-bf72d345) for test_image from vol-e7526fac")
+												"Created by CreateImage(source_instance) for test_image from vol-e7526fac")
 										.withSnapshotId("test_snapshot"),
 								new Snapshot()
-										.withDescription("Created by CreateImage(i-bf72d345) for ami-xx from vol-e7526fac"),
+										.withDescription("Created by CreateImage(source_instance) for ami-xx from vol-e7526fac"),
 								new Snapshot())));
-		aws.deleteSnapshotsForImage("test_image");
+		aws.deleteStorageArtifacts("test_image");
 		verify(ec2Client, never()).deleteSnapshot(any());
 	}
 

@@ -62,7 +62,7 @@ public class AWSCopyProvider implements CopyProvider {
 		log.info("Deleting copy " + instance);
 		aws.terminateEc2Instance(instance);
 		aws.deregisterAMI(instanceImages.get(instance));
-		aws.deleteSnapshotsForImage(instanceImages.get(instance));
+		aws.deleteStorageArtifacts(instanceImages.get(instance));
 		instanceImages.remove(instance);
 	}
 

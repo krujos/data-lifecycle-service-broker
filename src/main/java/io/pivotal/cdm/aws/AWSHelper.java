@@ -18,6 +18,8 @@ public class AWSHelper {
 
 	private String subnetId;
 
+	private String sourceInstanceId;
+
 	/**
 	 * Create a new pattern interface to AWS.
 	 * 
@@ -25,9 +27,11 @@ public class AWSHelper {
 	 * @param subnetId
 	 */
 	@Autowired
-	public AWSHelper(AmazonEC2Client ec2Client, String subnetId) {
+	public AWSHelper(AmazonEC2Client ec2Client, String subnetId,
+			String sourceInstanceId) {
 		this.ec2Client = ec2Client;
 		this.subnetId = subnetId;
+		this.sourceInstanceId = sourceInstanceId;
 	}
 
 	public String getEC2InstanceIp(String instance) {
@@ -80,7 +84,7 @@ public class AWSHelper {
 	 * @throws TimeoutException
 	 *             if the ami isn't available in time.
 	 * 
-	 * @see #deleteSnapshotsForImage(String)
+	 * @see #deleteStorageArtifacts(String)
 	 */
 	public String createAMI(String sourceInstance, String description)
 			throws TimeoutException {
@@ -102,20 +106,15 @@ public class AWSHelper {
 	}
 
 	/**
-	 * Find the snap associated with the AMI we used and delete it. AWS doesn't
-	 * help us out much and the only relationship (as of 2/14/2015) we can
-	 * leverage is the description field.
-	 * 
-	 * TODO we could make the snap ourselves and track it that way.
-	 * 
-	 * TODO As it stands this method is not very generalizable. Address if
-	 * packaging separately.
+	 * Find the snap & volumes associated with the AMI we used and delete it.
+	 * AWS doesn't help us out much and the only relationship (as of 2/14/2015)
+	 * we can leverage is the description field.
 	 * 
 	 * @param ami
 	 *            to find associated snaps for
 	 * @throws ServiceBrokerExceptions
 	 */
-	public void deleteSnapshotsForImage(String ami)
+	public void deleteStorageArtifacts(String ami)
 			throws ServiceBrokerException {
 
 		DescribeSnapshotsResult desc = ec2Client.describeSnapshots();
@@ -128,21 +127,49 @@ public class AWSHelper {
 		// cleaned up) as part of the ami creation is by the description. This
 		// code is brittle and will probably fail in unexpected and glamorous
 		// ways.
-		String amiDesc = "Created by CreateImage(i-bf72d345) for " + ami
-				+ " from vol";
+		String amiDesc = "Created by CreateImage(" + sourceInstanceId
+				+ ") for " + ami + " from vol";
+
+		// Would be nice if the aws client return optionals...
 		List<Snapshot> matching = snapshots.stream()
 				.filter(s -> safeContain(s::getDescription, amiDesc))
 				.collect(Collectors.toList());
-		if (matching.size() > 1) {
-			throw new ServiceBrokerException(
-					"Found too many snapshots for AMI " + ami);
-		}
-		if (1 == matching.size()) {
+
+		switch (matching.size()) {
+		case 0:
+			// Should this throw? Might have been manually cleaned up...but it
+			// may orphan the volume. It's done this way to allow people to
+			// create their own instances in AWS and not jack them up by
+			// deleting the volume
+			log.error("No snapshots found for AMI " + ami);
+			break;
+		case 1:
 			String snap = matching.get(0).getSnapshotId();
 			log.info("Deleting snapshot " + snap);
 			ec2Client.deleteSnapshot(new DeleteSnapshotRequest()
 					.withSnapshotId(snap));
+
+			deleteVolumeForSnap(snap);
+			break;
+		default:
+			throw new ServiceBrokerException(
+					"Found too many snapshots for AMI " + ami);
 		}
+	}
+
+	private void deleteVolumeForSnap(String snap) {
+		DescribeVolumesResult volumes = ec2Client
+				.describeVolumes(new DescribeVolumesRequest()
+						.withFilters(new Filter().withName("snapshot-id")
+								.withValues(snap)));
+
+		if (1 != volumes.getVolumes().size()) {
+			log.error("Incorrect number of volumes found for snapshot " + snap);
+		}
+		String volId = volumes.getVolumes().stream().findFirst().get()
+				.getVolumeId();
+		log.info("Deleting volume " + volId);
+		ec2Client.deleteVolume(new DeleteVolumeRequest().withVolumeId(volId));
 	}
 
 	private boolean safeContain(Callable<String> s, String c) {

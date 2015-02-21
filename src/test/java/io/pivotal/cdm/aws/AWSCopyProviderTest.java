@@ -78,7 +78,7 @@ public class AWSCopyProviderTest {
 		provider.deleteCopy("test_instance");
 		verify(aws).terminateEc2Instance("test_instance");
 		verify(aws).deregisterAMI("test_ami");
-		verify(aws).deleteSnapshotsForImage("test_ami");
+		verify(aws).deleteStorageArtifacts("test_ami");
 	}
 
 	@Test
