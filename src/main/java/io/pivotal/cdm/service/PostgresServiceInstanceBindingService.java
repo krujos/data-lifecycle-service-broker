@@ -35,7 +35,7 @@ public class PostgresServiceInstanceBindingService implements
 	 */
 	@Autowired
 	public PostgresServiceInstanceBindingService(CopyProvider provider,
-			@Value("{#environment.SOURCE_INSTANCE_ID}") String sourceInstance) {
+			@Value("#{environment.SOURCE_INSTANCE_ID}") String sourceInstance) {
 		this.provider = provider;
 		this.sourceInstance = sourceInstance;
 	}
