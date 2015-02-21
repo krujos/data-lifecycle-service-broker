@@ -132,7 +132,7 @@ public class AWSHelper {
 
 		// Would be nice if the aws client return optionals...
 		List<Snapshot> matching = snapshots.stream()
-				.filter(s -> safeContain(s::getDescription, amiDesc))
+				.filter(s -> safeContains(s::getDescription, amiDesc))
 				.collect(Collectors.toList());
 
 		switch (matching.size()) {
@@ -172,7 +172,7 @@ public class AWSHelper {
 		ec2Client.deleteVolume(new DeleteVolumeRequest().withVolumeId(volId));
 	}
 
-	private boolean safeContain(Callable<String> s, String c) {
+	private boolean safeContains(Callable<String> s, String c) {
 		try {
 			return (null == s.call()) ? false : s.call().contains(c);
 		} catch (Exception e) {
