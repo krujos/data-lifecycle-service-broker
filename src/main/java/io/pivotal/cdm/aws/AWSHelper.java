@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.*;
@@ -23,9 +24,18 @@ public class AWSHelper {
 	 * @param ec2Client
 	 * @param subnetId
 	 */
+	@Autowired
 	public AWSHelper(AmazonEC2Client ec2Client, String subnetId) {
 		this.ec2Client = ec2Client;
 		this.subnetId = subnetId;
+	}
+
+	public String getEC2InstanceIp(String instance) {
+		DescribeInstancesResult result = ec2Client
+				.describeInstances(new DescribeInstancesRequest()
+						.withInstanceIds(instance));
+		return result.getReservations().get(0).getInstances().get(0)
+				.getPrivateIpAddress();
 	}
 
 	public void deregisterAMI(String ami) {
@@ -185,13 +195,5 @@ public class AWSHelper {
 			state = result.getImages().get(0).getState();
 		}
 		return state;
-	}
-
-	public String getEC2InstanceIp(String instance) {
-		DescribeInstancesResult result = ec2Client
-				.describeInstances(new DescribeInstancesRequest()
-						.withInstanceIds(instance));
-		return result.getReservations().get(0).getInstances().get(0)
-				.getPrivateIpAddress();
 	}
 }
