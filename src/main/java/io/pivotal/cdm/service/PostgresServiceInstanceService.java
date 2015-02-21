@@ -1,12 +1,16 @@
 package io.pivotal.cdm.service;
 
-import java.util.HashMap;
-import java.util.Map;
+import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
+import io.pivotal.cdm.provider.CopyProvider;
 
+import java.util.*;
+
+import org.apache.commons.lang3.tuple.*;
+import org.apache.log4j.Logger;
 import org.cloudfoundry.community.servicebroker.exception.*;
-import org.cloudfoundry.community.servicebroker.model.ServiceDefinition;
-import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
+import org.cloudfoundry.community.servicebroker.model.*;
 import org.cloudfoundry.community.servicebroker.service.ServiceInstanceService;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,29 +22,58 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class PostgresServiceInstanceService implements ServiceInstanceService {
+	private Logger log = Logger.getLogger(PostgresServiceInstanceService.class);
 
-	Map<String, ServiceInstance> instances = new HashMap<String, ServiceInstance>();
+	// TODO During broker refactor let service instances store user data.
+	Map<String, Pair<String, ServiceInstance>> instances = new HashMap<String, Pair<String, ServiceInstance>>();
+
+	private CopyProvider provider;
+
+	private String sourceInstanceId;
+
+	@Autowired
+	public PostgresServiceInstanceService(
+			final CopyProvider provider,
+			@Value("#{environment.SOURCE_INSTANCE_ID}") final String sourceInstanceId) {
+		this.provider = provider;
+		this.sourceInstanceId = sourceInstanceId;
+	}
 
 	@Override
 	public ServiceInstance createServiceInstance(ServiceDefinition service,
 			String serviceInstanceId, String planId, String organizationGuid,
 			String spaceGuid) throws ServiceInstanceExistsException,
 			ServiceBrokerException {
+		log.info("Creating service instance with id " + serviceInstanceId);
 		ServiceInstance instance = new ServiceInstance(serviceInstanceId,
 				service.getId(), planId, organizationGuid, spaceGuid, null);
-		instances.put(serviceInstanceId, instance);
+		String id = COPY.equals(planId) ? provider.createCopy(sourceInstanceId)
+				: sourceInstanceId;
+		instances.put(serviceInstanceId,
+				new MutablePair<String, ServiceInstance>(id, instance));
 		return instance;
 	}
 
 	@Override
 	public ServiceInstance deleteServiceInstance(String id, String serviceId,
 			String planId) throws ServiceBrokerException {
-		return instances.remove(id);
+
+		log.info("Deleting service instance binding " + id);
+		Pair<String, ServiceInstance> instance = instances.get(id);
+
+		if (null == instance) {
+			log.info(id + "not found to delete" + id);
+			return null;
+		}
+		if (COPY.equals(planId)) {
+			provider.deleteCopy(instance.getLeft());
+		}
+		return instances.remove(id).getRight();
 	}
 
 	@Override
 	public ServiceInstance getServiceInstance(String id) {
-		return instances.get(id);
+		return instances.containsKey(id) ? instances.get(id).getRight() : null;
 	}
 
 	@Override
@@ -48,18 +81,24 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 			String planId) throws ServiceInstanceUpdateNotSupportedException,
 			ServiceBrokerException, ServiceInstanceDoesNotExistException {
 
-		ServiceInstance oldInstance = instances.get(instanceId);
-		if (null == oldInstance) {
+		if (!instances.containsKey(instanceId)) {
 			throw new ServiceInstanceDoesNotExistException(instanceId);
 		}
 
-		instances.put(
-				instanceId,
+		ServiceInstance oldInstance = instances.get(instanceId).getRight();
+
+		instances.get(instanceId).setValue(
 				new ServiceInstance(instanceId, oldInstance
 						.getServiceDefinitionId(), planId, oldInstance
 						.getOrganizationGuid(), oldInstance.getSpaceGuid(),
 						oldInstance.getDashboardUrl()));
 
-		return instances.get(instanceId);
+		return instances.get(instanceId).getRight();
+	}
+
+	public String getInstanceIdForServiceInstance(String serviceInstanceId) {
+		return instances.values().stream()
+				.filter(s -> s.getRight().getId().equals(serviceInstanceId))
+				.findFirst().get().getLeft();
 	}
 }

@@ -7,6 +7,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import io.pivotal.cdm.provider.CopyProvider;
 
+import java.util.*;
+
 import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.*;
 import org.junit.*;
@@ -31,14 +33,26 @@ public class PostgresServiceInstanceBindingServiceProdTest {
 
 	private static String bindingId = "test_binding";
 
+	@Mock
+	PostgresServiceInstanceService instanceService;
+
 	@Before
 	public void setUp() throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		bindingService = new PostgresServiceInstanceBindingService(provider,
-				"source-instance");
-		when(provider.createCopy("source_instance"))
-				.thenReturn("test_instance");
+				instanceService);
+
+	}
+
+	@Test
+	public void itShouldReturnTheProdCreds() throws ServiceBrokerException,
+			ServiceInstanceBindingExistsException {
+
+		Map<String, Object> testCreds = new HashMap<String, Object>();
+		testCreds.put("uri", "prod_uri");
+		when(provider.getCreds("source_instance")).thenReturn(testCreds);
+
 		ServiceInstanceBinding bindResult = bindingService
 				.createServiceInstanceBinding(bindingId, serviceInstance,
 						serviceId, PRODUCTION, "test_app");

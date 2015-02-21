@@ -59,6 +59,7 @@ public class AWSCopyProvider implements CopyProvider {
 
 	@Override
 	public void deleteCopy(final String instance) throws ServiceBrokerException {
+		log.info("Deleting copy " + instance);
 		aws.terminateEc2Instance(instance);
 		aws.deregisterAMI(instanceImages.get(instance));
 		aws.deleteSnapshotsForImage(instanceImages.get(instance));

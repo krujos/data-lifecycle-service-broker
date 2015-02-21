@@ -1,15 +1,22 @@
 package io.pivotal.cdm.config;
 
+import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.service.PostgresServiceInstanceService;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.context.annotation.*;
 
 @Configuration
 public class PostgresServiceInstanceServiceConfig {
 
+	@Autowired
+	CopyProvider provider;
+
+	@Value("#{environment.SOURCE_INSTANCE_ID}")
+	String sourceInstanceId;
+
 	@Bean
 	PostgresServiceInstanceService postgresServiceInstanceService() {
-		return new PostgresServiceInstanceService();
+		return new PostgresServiceInstanceService(provider, sourceInstanceId);
 	}
 }
