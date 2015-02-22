@@ -163,13 +163,14 @@ public class AWSHelper {
 						.withFilters(new Filter().withName("snapshot-id")
 								.withValues(snap)));
 
-		if (1 != volumes.getVolumes().size()) {
-			log.error("Incorrect number of volumes found for snapshot " + snap);
+		Volume vol = volumes.getVolumes().stream().findFirst().get();
+		if ("in-use".equals(vol.getState())) {
+			log.error("Volume is still in use, sleeping 30");
+			sleep();
 		}
-		String volId = volumes.getVolumes().stream().findFirst().get()
-				.getVolumeId();
-		log.info("Deleting volume " + volId);
-		ec2Client.deleteVolume(new DeleteVolumeRequest().withVolumeId(volId));
+		log.info("Deleting volume " + vol.getVolumeId());
+		ec2Client.deleteVolume(new DeleteVolumeRequest().withVolumeId(vol
+				.getVolumeId()));
 	}
 
 	private boolean safeContains(Callable<String> s, String c) {

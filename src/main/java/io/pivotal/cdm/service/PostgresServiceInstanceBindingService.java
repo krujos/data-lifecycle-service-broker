@@ -1,8 +1,10 @@
 package io.pivotal.cdm.service;
 
+import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.cloudfoundry.community.servicebroker.exception.*;
@@ -69,5 +71,18 @@ public class PostgresServiceInstanceBindingService implements
 			String bindingId, ServiceInstance instance, String serviceId,
 			String planId) throws ServiceBrokerException {
 		return instances.remove(bindingId);
+	}
+
+	public List<InstancePair> getAppToCopyBinding() {
+		//@formatter:off
+		return instances
+				.values()
+				.stream()
+				.map(v -> new InstancePair(
+						v.getAppGuid(),
+						instanceService.getInstanceIdForServiceInstance(
+								v.getServiceInstanceId())))
+				.collect(Collectors.toList());
+		//@formatter:on
 	}
 }

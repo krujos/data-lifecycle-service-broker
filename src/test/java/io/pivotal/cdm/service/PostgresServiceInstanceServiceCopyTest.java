@@ -1,11 +1,16 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
+import static io.pivotal.cdm.config.PostgresCatalogConfig.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import io.pivotal.cdm.config.PostgresCatalogConfig;
+import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
+
+import java.util.List;
+import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 
 import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
@@ -88,5 +93,48 @@ public class PostgresServiceInstanceServiceCopyTest {
 		createServiceInstance();
 		assertThat(service.getInstanceIdForServiceInstance(instance.getId()),
 				is(equalTo("copy_instance")));
+	}
+
+	@Test
+	public void itReturnsTheCorrectListOfServices()
+			throws ServiceBrokerException, ServiceInstanceExistsException {
+
+		when(provider.createCopy("source_instance_id")).thenReturn(
+				"copy_instance1", "copy_instance2", "copy_instance3",
+				"copy_instance4");
+
+		IntConsumer creator = new IntConsumer() {
+
+			@Override
+			public void accept(int i) {
+				try {
+					service.createServiceInstance(new PostgresCatalogConfig()
+							.catalog().getServiceDefinitions().get(0),
+							"service_instance_id_" + i, COPY, "org_guid",
+							"space_guid");
+				} catch (ServiceInstanceExistsException
+						| ServiceBrokerException e) {
+					fail(e.getMessage());
+				}
+			}
+		};
+		IntStream.range(0, 4).forEach(creator);
+		service.createServiceInstance(new PostgresCatalogConfig().catalog()
+				.getServiceDefinitions().get(0), "service_instance_id_" + 5,
+				PRODUCTION, "org_guid", "space_guid");
+
+		List<InstancePair> instances = service.getProvisionedInstances();
+		assertThat(instances, hasSize(5));
+		assertTrue(instances.contains(new InstancePair("source_instance_id",
+				"copy_instance2")));
+		assertTrue(instances.contains(new InstancePair("source_instance_id",
+				"source_instance_id")));
+	}
+
+	@Test(expected = ServiceInstanceExistsException.class)
+	public void itShouldThrowIfInstanceAlreadyExists()
+			throws ServiceInstanceExistsException, ServiceBrokerException {
+		createServiceInstance();
+		createServiceInstance();
 	}
 }

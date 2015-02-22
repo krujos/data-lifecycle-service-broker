@@ -39,9 +39,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.cloudfoundry</groupId>
-			<artifactId>spring-boot-cf-service-broker</artifactId>
-			<version>2.4.0</version>
+			<groupId>com.github.krujos</groupId>
+			<artifactId>spring-boot-cf-service-broker.spring-boot-cf-service-broker</artifactId>
+			<version>v0.01</version>
 		</dependency>
 		<dependency>
 			<groupId>org.cloudfoundry</groupId>

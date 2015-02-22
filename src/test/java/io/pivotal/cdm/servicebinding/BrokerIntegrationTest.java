@@ -2,6 +2,7 @@ package io.pivotal.cdm.servicebinding;
 
 import static com.jayway.restassured.RestAssured.given;
 import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
+import static org.hamcrest.Matchers.*;
 import io.pivotal.cdm.CdmServiceBrokerApplication;
 
 import org.junit.*;
@@ -44,6 +45,9 @@ public class BrokerIntegrationTest {
 	@Autowired
 	private AmazonEC2Client ec2Client;
 
+	@Value("#{environment.SOURCE_INSTANCE_ID}")
+	private String sourceInstanceId;
+
 	@Before
 	public void setUp() {
 		RestAssured.port = port;
@@ -54,47 +58,110 @@ public class BrokerIntegrationTest {
 	}
 
 	@Test
+	public void itHasASourceInstance() {
+		given().auth().basic(username, password).get("/api/sourceinstance")
+				.then().body("sourceInstance", equalTo(sourceInstanceId));
+	}
+
+	@Test
 	public void itCreatesAnAMIAndImageAndCleansUp() throws JSONException,
 			InterruptedException {
 
+		validateNoBinding();
+		validateNothingProvisioned();
 		JSONObject serviceInstance = new JSONObject();
 		serviceInstance.put("service_id", "postgrescdm");
 		serviceInstance.put("plan_id", COPY);
 		serviceInstance.put("organization_guid", "org_guid");
 		serviceInstance.put("space_guid", "s_guid");
-		given().auth().basic(username, password).and()
-				.contentType("application/json").and()
+		givenTheBroker().and().contentType("application/json").and()
 				.body(serviceInstance.toString())
 				.put("/v2/service_instances/1234").then().statusCode(201);
+
+		validateProvisioning();
 
 		JSONObject args = new JSONObject();
 		args.put("service_id", "postgrescmd");
 		args.put("plan_id", COPY);
 		args.put("app_guid", "app_guid");
-		given().auth().basic(username, password).and()
-				.contentType("application/json").and().content(args.toString())
-				.and()
+		givenTheBroker().and().contentType("application/json").and()
+				.content(args.toString()).and()
 				.put("/v2/service_instances/1234/service_bindings/1234521")
 				.then().statusCode(201);
 
-		Thread.sleep(10000);
+		validateBinding();
+		Thread.sleep(10000); // Let AWS get the machines moving;
 
-		given().auth()
-				.basic(username, password)
+		// Try to delete the wrong thing;
+		givenTheBroker()
 				.delete("/v2/service_instances/1234/service_bindings/nothing?service_id=postgrescdm&plan_id=copy")
 				.then().statusCode(410);
 
-		// TODO This should inspect AWS to verify success.
+		validateBinding();
 
-		given().auth()
-				.basic(username, password)
+		givenTheBroker()
 				.delete("/v2/service_instances/1234/service_bindings/1234521?service_id=postgrescdm&plan_id=copy")
 				.then().statusCode(200);
 
-		given().auth()
-				.basic(username, password)
+		validateNoBinding();
+
+		givenTheBroker()
 				.delete("/v2/service_instances/1234?service_id=postgrescdm&plan_id=copy")
 				.then().statusCode(200);
 
+		validateNothingProvisioned();
+
+		givenTheBroker()
+				.delete("/v2/service_instances/1234?service_id=postgrescdm&plan_id=copy")
+				.then().statusCode(410);
+
+		validateNothingProvisioned();
+	}
+
+	private RequestSpecification givenTheBroker() {
+		return given().auth().basic(username, password);
+	}
+
+	private void validateNothingProvisioned() {
+		//@formatter:off
+		givenTheBroker()
+			.get("/api/instances")
+			.then()
+			.body("$", hasSize(0));
+		//@formatter:on
+	}
+
+	private void validateNoBinding() {
+		//@formatter:off
+		givenTheBroker()
+			.get("/api/bindings")
+			.then()
+			.body("$", hasSize(0));
+		//@formatter:on
+	}
+
+	private void validateBinding() {
+		//@formatter:off
+		givenTheBroker()
+			.get("/api/bindings")
+			.then()
+			.body("[0].source", equalTo("app_guid"))
+			.and()
+			.body("[0].copy", notNullValue())
+			.and()
+			.body("$", hasSize(1));
+		//@formatter:on
+	}
+
+	private void validateProvisioning() throws JSONException {
+		//@formatter:off
+		givenTheBroker()
+			.get("/api/instances")
+			.then()
+			.body("[0].source", equalTo(sourceInstanceId))
+			.and()
+			.body("[0].copy", notNullValue())
+			.and()
+			.body("$", hasSize(1));
 	}
 }

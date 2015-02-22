@@ -1,9 +1,11 @@
 package io.pivotal.cdm.service;
 
 import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
+import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.*;
 import org.apache.log4j.Logger;
@@ -25,6 +27,7 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 	private Logger log = Logger.getLogger(PostgresServiceInstanceService.class);
 
 	// TODO During broker refactor let service instances store user data.
+	// The Mapping is Map<SourceInstanceID, Pair<CopyID, ServiceInstance>
 	Map<String, Pair<String, ServiceInstance>> instances = new HashMap<String, Pair<String, ServiceInstance>>();
 
 	private CopyProvider provider;
@@ -44,7 +47,13 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 			String serviceInstanceId, String planId, String organizationGuid,
 			String spaceGuid) throws ServiceInstanceExistsException,
 			ServiceBrokerException {
+
 		log.info("Creating service instance with id " + serviceInstanceId);
+		if (instances.containsKey(serviceInstanceId)) {
+			throw new ServiceInstanceExistsException(instances.get(
+					serviceInstanceId).getRight());
+		}
+
 		ServiceInstance instance = new ServiceInstance(serviceInstanceId,
 				service.getId(), planId, organizationGuid, spaceGuid, null);
 		String id = COPY.equals(planId) ? provider.createCopy(sourceInstanceId)
@@ -97,8 +106,27 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 	}
 
 	public String getInstanceIdForServiceInstance(String serviceInstanceId) {
-		return instances.values().stream()
+		//@formatter:off
+		return instances
+				.values()
+				.stream()
 				.filter(s -> s.getRight().getId().equals(serviceInstanceId))
-				.findFirst().get().getLeft();
+				.findFirst().
+				get().getLeft();
+		//@formatter:on
+	}
+
+	public List<InstancePair> getProvisionedInstances() {
+		//@formatter:off
+		return instances.
+				values()
+				.stream()
+				.map(i -> new InstancePair(sourceInstanceId, i.getLeft()))
+				.collect(Collectors.toList());
+		//@formatter:on
+	}
+
+	public String getSourceInstanceId() {
+		return sourceInstanceId;
 	}
 }

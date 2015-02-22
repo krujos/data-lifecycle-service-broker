@@ -2,8 +2,9 @@ package io.pivotal.cdm.service;
 
 import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
+import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
 
 import java.util.*;
@@ -79,5 +80,25 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 				serviceInstance, "postgrescdm", COPY, "test_app");
 		bindResult = bindingService.createServiceInstanceBinding(bindingId,
 				serviceInstance, "postgrescdm", COPY, "test_app");
+	}
+
+	@Test
+	public void itShouldReturnAppToInstancePairsAndBindToMutipleApps()
+			throws ServiceInstanceBindingExistsException,
+			ServiceBrokerException {
+		when(
+				instanceService.getInstanceIdForServiceInstance(serviceInstance
+						.getId())).thenReturn("test_copy");
+		bindingService.createServiceInstanceBinding("bind1", serviceInstance,
+				"postgrescdm", COPY, "test_app");
+		bindingService.createServiceInstanceBinding("bind2", serviceInstance,
+				"postgrescdm", COPY, "test_app2");
+		bindingService.createServiceInstanceBinding("bind3", serviceInstance,
+				"postgrescdm", COPY, "test_app3");
+
+		List<InstancePair> appBindings = bindingService.getAppToCopyBinding();
+		assertThat(appBindings, hasSize(3));
+		assertTrue(appBindings.contains(new InstancePair("test_app2",
+				"test_copy")));
 	}
 }
