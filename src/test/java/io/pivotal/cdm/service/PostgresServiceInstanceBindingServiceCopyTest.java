@@ -3,9 +3,12 @@ package io.pivotal.cdm.service;
 import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 import io.pivotal.cdm.dto.InstancePair;
+import io.pivotal.cdm.model.BrokerAction;
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.repo.BrokerActionRepository;
 
 import java.util.*;
 
@@ -36,12 +39,15 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	@Mock
 	PostgresServiceInstanceService instanceService;
 
+	@Mock
+	BrokerActionRepository repo;
+
 	@Before
 	public void setUp() throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		bindingService = new PostgresServiceInstanceBindingService(provider,
-				instanceService);
+				instanceService, repo);
 	}
 
 	@Test
@@ -100,5 +106,14 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 		assertThat(appBindings, hasSize(3));
 		assertTrue(appBindings.contains(new InstancePair("test_app2",
 				"test_copy")));
+	}
+
+	@Test
+	public void itShouldUpdateItsStatusDuringTheBind()
+			throws ServiceInstanceBindingExistsException,
+			ServiceBrokerException {
+		bindingService.createServiceInstanceBinding("bind1", serviceInstance,
+				"postgrescdm", COPY, "test_app");
+		verify(repo, times(2)).save(any(BrokerAction.class));
 	}
 }

@@ -34,10 +34,32 @@
     </table>
 </div>
 
-<div id="in-flight">
+<div ng-controller="SearchController" id="operations">
     <h2>Operations in flight</h2>
     <table>
-        <thead><tr><th>App ID</th><th>Copy ID</th></tr></thead>
+        <thead><tr><th>Id</th><th>Current Action</th></tr></thead>
+        <tr ng-repeat="i in inProgress">
+            <td>{{i.actor}}</td>
+            <td>{{i.action}}</td>
+        </tr>
+    </table>
+
+    <h2>Failed Operations</h2>
+    <table>
+        <thead><tr><th>Id</th><th>Current Action</th></tr></thead>
+        <tr ng-repeat="i in failed">
+            <td>{{i.actor}}</td>
+            <td>{{i.action}}</td>
+        </tr>
+    </table>
+
+    <h2>Complete Operations</h2>
+    <table>
+        <thead><tr><th>Id</th><th>Current Action</th></tr></thead>
+        <tr ng-repeat="i in complete">
+            <td>{{i.actor}}</td>
+            <td>{{i.action}}</td>
+        </tr>
     </table>
 </div>
 </body>

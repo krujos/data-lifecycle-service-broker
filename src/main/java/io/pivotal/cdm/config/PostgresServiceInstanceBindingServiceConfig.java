@@ -1,6 +1,7 @@
 package io.pivotal.cdm.config;
 
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.repo.BrokerActionRepository;
 import io.pivotal.cdm.service.*;
 
 import org.springframework.beans.factory.annotation.*;
@@ -18,9 +19,12 @@ public class PostgresServiceInstanceBindingServiceConfig {
 	@Autowired
 	PostgresServiceInstanceService instanceService;
 
+	@Autowired
+	BrokerActionRepository repo;
+
 	@Bean
 	PostgresServiceInstanceBindingService postgresServiceInstanceBindingService() {
 		return new PostgresServiceInstanceBindingService(provider,
-				instanceService);
+				instanceService, repo);
 	}
 }

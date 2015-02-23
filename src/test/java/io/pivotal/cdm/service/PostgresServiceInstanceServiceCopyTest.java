@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import io.pivotal.cdm.config.PostgresCatalogConfig;
 import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.repo.BrokerActionRepository;
 
 import java.util.List;
 import java.util.function.IntConsumer;
@@ -25,12 +26,15 @@ public class PostgresServiceInstanceServiceCopyTest {
 	@Mock
 	CopyProvider provider;
 
+	@Mock
+	BrokerActionRepository brokerRepo;
+
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		service = new PostgresServiceInstanceService(provider,
-				"source_instance_id");
+				"source_instance_id", brokerRepo);
 	}
 
 	private void createServiceInstance() throws ServiceInstanceExistsException,

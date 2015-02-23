@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.repo.BrokerActionRepository;
 
 import java.util.*;
 
@@ -36,12 +37,15 @@ public class PostgresServiceInstanceBindingServiceProdTest {
 	@Mock
 	PostgresServiceInstanceService instanceService;
 
+	@Mock
+	BrokerActionRepository repo;
+
 	@Before
 	public void setUp() throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		bindingService = new PostgresServiceInstanceBindingService(provider,
-				instanceService);
+				instanceService, repo);
 
 	}
 

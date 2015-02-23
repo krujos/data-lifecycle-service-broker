@@ -1,7 +1,10 @@
 package io.pivotal.cdm.service;
 
+import static io.pivotal.cdm.model.BrokerActionState.*;
 import io.pivotal.cdm.dto.InstancePair;
+import io.pivotal.cdm.model.*;
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.repo.BrokerActionRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,12 +22,14 @@ public class PostgresServiceInstanceBindingService implements
 
 	private CopyProvider provider;
 
-	private Logger log = Logger
+	private Logger logger = Logger
 			.getLogger(PostgresServiceInstanceBindingService.class);
 
 	private Map<String, ServiceInstanceBinding> instances = new HashMap<String, ServiceInstanceBinding>();
 
 	private PostgresServiceInstanceService instanceService;
+
+	BrokerActionRepository brokerRepo;
 
 	/**
 	 * Build a new binding service.
@@ -36,9 +41,11 @@ public class PostgresServiceInstanceBindingService implements
 	 */
 	@Autowired
 	public PostgresServiceInstanceBindingService(CopyProvider provider,
-			PostgresServiceInstanceService instanceService) {
+			PostgresServiceInstanceService instanceService,
+			BrokerActionRepository brokerRepo) {
 		this.provider = provider;
 		this.instanceService = instanceService;
+		this.brokerRepo = brokerRepo;
 	}
 
 	@Override
@@ -48,22 +55,27 @@ public class PostgresServiceInstanceBindingService implements
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 
-		log.info("Creating service binding for app " + appGuid);
+		log(bindingId, "Creating service binding for app " + appGuid,
+				IN_PROGRESS);
 
-		if (instances.containsKey(bindingId)) {
-			throw new ServiceInstanceBindingExistsException(
-					instances.get(bindingId));
+		throwIfDuplicate(bindingId);
+
+		try {
+			String instance = instanceService
+					.getInstanceIdForServiceInstance(serviceInstance.getId());
+
+			ServiceInstanceBinding binding = new ServiceInstanceBinding(
+					bindingId, serviceInstance.getId(),
+					provider.getCreds(instance), null, appGuid);
+
+			instances.put(bindingId, binding);
+			log(bindingId, "Created service binding for app " + appGuid,
+					COMPLETE);
+			return binding;
+		} catch (Exception e) {
+			log(bindingId, "Failed to bind app " + appGuid, FAILED);
+			throw e;
 		}
-
-		String instance = instanceService
-				.getInstanceIdForServiceInstance(serviceInstance.getId());
-
-		ServiceInstanceBinding binding = new ServiceInstanceBinding(bindingId,
-				serviceInstance.getId(), provider.getCreds(instance), null,
-				appGuid);
-
-		instances.put(bindingId, binding);
-		return binding;
 	}
 
 	@Override
@@ -84,5 +96,24 @@ public class PostgresServiceInstanceBindingService implements
 								v.getServiceInstanceId())))
 				.collect(Collectors.toList());
 		//@formatter:on
+	}
+
+	private void log(String id, String msg, BrokerActionState state) {
+		String logMsg = msg + " " + id;
+
+		if (FAILED == state) {
+			logger.error(logMsg);
+		} else {
+			logger.info(logMsg);
+		}
+		brokerRepo.save(new BrokerAction(id, state, msg));
+	}
+
+	private void throwIfDuplicate(String bindingId)
+			throws ServiceInstanceBindingExistsException {
+		if (instances.containsKey(bindingId)) {
+			throw new ServiceInstanceBindingExistsException(
+					instances.get(bindingId));
+		}
 	}
 }
