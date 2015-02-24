@@ -24,8 +24,11 @@ public class PostgresServiceInstanceBindingServiceProdTest {
 
 	private PostgresServiceInstanceBindingService bindingService;
 
+	CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+			"test_service", PRODUCTION, "org", "space")
+			.withServiceInstanceId("test_service_id");
 	private ServiceInstance serviceInstance = new ServiceInstance(
-			"test_service", "test_service_id", PRODUCTION, "1234", "4566", null);
+			createServiceInstanceRequest);
 
 	private String serviceId = "postgrescmd";
 
@@ -58,16 +61,19 @@ public class PostgresServiceInstanceBindingServiceProdTest {
 		when(provider.getCreds("source_instance")).thenReturn(testCreds);
 
 		ServiceInstanceBinding bindResult = bindingService
-				.createServiceInstanceBinding(bindingId, serviceInstance,
-						serviceId, PRODUCTION, "test_app");
+				.createServiceInstanceBinding(new CreateServiceInstanceBindingRequest(
+						serviceInstance.getServiceDefinitionId(), PRODUCTION,
+						"test_app").withBindingId(bindingId).and()
+						.withServiceInstanceId(serviceInstance.getId()));
 		assertThat(bindResult.getId(), is(equalTo(bindingId)));
 	}
 
 	@Test
 	public void itShouldNotInteractWithProviderForTheProductionCopyDuringUnbind()
 			throws ServiceBrokerException {
-		bindingService.deleteServiceInstanceBinding(bindingId, serviceInstance,
-				serviceId, PRODUCTION);
+		bindingService
+				.deleteServiceInstanceBinding(new DeleteServiceInstanceBindingRequest(
+						bindingId, serviceInstance, serviceId, PRODUCTION));
 		verify(provider, never()).deleteCopy(any());
 	}
 }

@@ -11,6 +11,8 @@ import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
 import java.util.*;
+import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 
 import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.*;
@@ -27,7 +29,8 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	private PostgresServiceInstanceBindingService bindingService;
 
 	private ServiceInstance serviceInstance = new ServiceInstance(
-			"test_service", "test_service_id", COPY, "1234", "4566", null);
+			new CreateServiceInstanceRequest("test_service_def_id", COPY,
+					"org", "space"));
 
 	private ServiceInstanceBinding bindResult;
 
@@ -41,6 +44,10 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 
 	@Mock
 	BrokerActionRepository repo;
+
+	private CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
+			"postgrescdm", COPY, "test_app").withBindingId(bindingId).and()
+			.withServiceInstanceId(serviceInstance.getId());
 
 	@Before
 	public void setUp() throws ServiceInstanceBindingExistsException,
@@ -62,8 +69,8 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 				instanceService.getInstanceIdForServiceInstance(serviceInstance
 						.getId())).thenReturn("test_instance");
 
-		bindResult = bindingService.createServiceInstanceBinding(bindingId,
-				serviceInstance, "postgrescdm", COPY, "test_app");
+		bindResult = bindingService
+				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
 
 		assertThat(bindResult.getId(), is(equalTo(bindingId)));
 		assertThat(bindResult.getCredentials().get("uri"),
@@ -74,18 +81,19 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	public void itPlaysItCoolIfItDoesNotHaveAnInstance()
 			throws ServiceBrokerException {
 
-		bindingService.deleteServiceInstanceBinding("foo", serviceInstance,
-				"postgrescdm", COPY);
+		bindingService
+				.deleteServiceInstanceBinding(new DeleteServiceInstanceBindingRequest(
+						"foo", serviceInstance, "postgrescdm", COPY));
 	}
 
 	@Test(expected = ServiceInstanceBindingExistsException.class)
 	public void duplicateServiceShouldThrow()
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
-		bindResult = bindingService.createServiceInstanceBinding(bindingId,
-				serviceInstance, "postgrescdm", COPY, "test_app");
-		bindResult = bindingService.createServiceInstanceBinding(bindingId,
-				serviceInstance, "postgrescdm", COPY, "test_app");
+		bindResult = bindingService
+				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
+		bindResult = bindingService
+				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
 	}
 
 	@Test
@@ -95,12 +103,22 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 		when(
 				instanceService.getInstanceIdForServiceInstance(serviceInstance
 						.getId())).thenReturn("test_copy");
-		bindingService.createServiceInstanceBinding("bind1", serviceInstance,
-				"postgrescdm", COPY, "test_app");
-		bindingService.createServiceInstanceBinding("bind2", serviceInstance,
-				"postgrescdm", COPY, "test_app2");
-		bindingService.createServiceInstanceBinding("bind3", serviceInstance,
-				"postgrescdm", COPY, "test_app3");
+
+		IntConsumer consumer = new IntConsumer() {
+			@Override
+			public void accept(int i) {
+				createServiceInstanceBindingRequest.withBindingId("bind" + i)
+						.setAppGuid("test_app" + i);
+				try {
+					bindingService
+							.createServiceInstanceBinding(createServiceInstanceBindingRequest);
+				} catch (ServiceInstanceBindingExistsException
+						| ServiceBrokerException e) {
+					fail("Failed to create service instance bindings");
+				}
+			}
+		};
+		IntStream.range(1, 4).forEach(consumer);
 
 		List<InstancePair> appBindings = bindingService.getAppToCopyBinding();
 		assertThat(appBindings, hasSize(3));
@@ -112,8 +130,8 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	public void itShouldUpdateItsStatusDuringTheBind()
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
-		bindingService.createServiceInstanceBinding("bind1", serviceInstance,
-				"postgrescdm", COPY, "test_app");
+		bindingService
+				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
 		verify(repo, times(2)).save(any(BrokerAction.class));
 	}
 }

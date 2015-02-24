@@ -11,7 +11,7 @@ import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
 import org.cloudfoundry.community.servicebroker.exception.*;
-import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
+import org.cloudfoundry.community.servicebroker.model.*;
 import org.junit.*;
 import org.mockito.*;
 
@@ -26,19 +26,26 @@ public class PostgresServiceInstanceServiceProdTest {
 	@Mock
 	BrokerActionRepository brokerRepo;
 
+	// TODO DRY w/ copy test
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		service = new PostgresServiceInstanceService(provider,
 				"source_instance_id", brokerRepo);
+
 	}
 
 	private void createServiceInstance() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
-		instance = service.createServiceInstance(new PostgresCatalogConfig()
-				.catalog().getServiceDefinitions().get(0),
-				"service_instance_id", PRODUCTION, "org_guid", "space_guid");
+		ServiceDefinition serviceDef = new PostgresCatalogConfig().catalog()
+				.getServiceDefinitions().get(0);
+		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+				serviceDef.getId(), PRODUCTION, "org_guid", "space_guid")
+				.withServiceInstanceId("service_instance_id").and()
+				.withServiceDefinition(serviceDef);
+
+		instance = service.createServiceInstance(createServiceInstanceRequest);
 		verify(provider, never()).createCopy(any());
 	}
 
@@ -53,8 +60,9 @@ public class PostgresServiceInstanceServiceProdTest {
 	public void itShouldNotDeleteACopyForProd() throws ServiceBrokerException,
 			ServiceInstanceExistsException {
 		createServiceInstance();
-		assertNotNull(service.deleteServiceInstance(instance.getId(),
-				"serviceId", PRODUCTION));
+		assertNotNull(service
+				.deleteServiceInstance(new DeleteServiceInstanceRequest(
+						instance.getId(), "serviceId", PRODUCTION)));
 		verifyZeroInteractions(provider);
 	}
 
@@ -77,7 +85,8 @@ public class PostgresServiceInstanceServiceProdTest {
 	public void itShouldDocumentItsInFlightDeleteActions()
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
-		service.deleteServiceInstance(instance.getId(), "serviceId", PRODUCTION);
+		service.deleteServiceInstance(new DeleteServiceInstanceRequest(instance
+				.getId(), "serviceId", PRODUCTION));
 		verify(brokerRepo, times(4)).save(any(BrokerAction.class));
 	}
 
@@ -87,6 +96,7 @@ public class PostgresServiceInstanceServiceProdTest {
 			ServiceBrokerException, ServiceInstanceDoesNotExistException,
 			ServiceInstanceExistsException {
 		createServiceInstance();
-		service.updateServiceInstance(instance.getId(), COPY);
+		service.updateServiceInstance(new UpdateServiceInstanceRequest(COPY)
+				.withInstanceId(instance.getId()));
 	}
 }

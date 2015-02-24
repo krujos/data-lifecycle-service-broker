@@ -14,7 +14,7 @@ import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 import org.cloudfoundry.community.servicebroker.exception.*;
-import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
+import org.cloudfoundry.community.servicebroker.model.*;
 import org.junit.*;
 import org.mockito.*;
 
@@ -24,10 +24,13 @@ public class PostgresServiceInstanceServiceCopyTest {
 	private ServiceInstance instance;
 
 	@Mock
-	CopyProvider provider;
+	private CopyProvider provider;
 
 	@Mock
-	BrokerActionRepository brokerRepo;
+	private BrokerActionRepository brokerRepo;
+
+	private ServiceDefinition serviceDef = new PostgresCatalogConfig()
+			.catalog().getServiceDefinitions().get(0);
 
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
@@ -35,15 +38,19 @@ public class PostgresServiceInstanceServiceCopyTest {
 		MockitoAnnotations.initMocks(this);
 		service = new PostgresServiceInstanceService(provider,
 				"source_instance_id", brokerRepo);
+
 	}
 
 	private void createServiceInstance() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
 		when(provider.createCopy("source_instance_id")).thenReturn(
 				"copy_instance");
-		instance = service.createServiceInstance(new PostgresCatalogConfig()
-				.catalog().getServiceDefinitions().get(0),
-				"service_instance_id", COPY, "org_guid", "space_guid");
+		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+				serviceDef.getId(), COPY, "org_guid", "space_guid")
+				.withServiceInstanceId("service_instance_id").and()
+				.withServiceDefinition(serviceDef);
+
+		instance = service.createServiceInstance(createServiceInstanceRequest);
 	}
 
 	@Test
@@ -65,9 +72,10 @@ public class PostgresServiceInstanceServiceCopyTest {
 	public void itDeletesWhatItShould() throws ServiceBrokerException,
 			ServiceInstanceExistsException {
 		createServiceInstance();
-		assertThat(service.deleteServiceInstance(instance.getId(),
-				instance.getServiceDefinitionId(), instance.getPlanId()),
-				is(equalTo(instance)));
+		assertThat(
+				service.deleteServiceInstance(new DeleteServiceInstanceRequest(
+						instance.getId(), instance.getServiceDefinitionId(),
+						instance.getPlanId())), is(equalTo(instance)));
 		assertNull(service.getServiceInstance(instance.getId()));
 		verify(provider).deleteCopy("copy_instance");
 	}
@@ -93,10 +101,12 @@ public class PostgresServiceInstanceServiceCopyTest {
 			@Override
 			public void accept(int i) {
 				try {
-					service.createServiceInstance(new PostgresCatalogConfig()
-							.catalog().getServiceDefinitions().get(0),
-							"service_instance_id_" + i, COPY, "org_guid",
-							"space_guid");
+					CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+							serviceDef.getId(), COPY, "org_guid", "space_guid")
+							.withServiceInstanceId("service_instance_id" + i)
+							.and().withServiceDefinition(serviceDef);
+
+					service.createServiceInstance(createServiceInstanceRequest);
 				} catch (ServiceInstanceExistsException
 						| ServiceBrokerException e) {
 					fail(e.getMessage());
@@ -104,9 +114,12 @@ public class PostgresServiceInstanceServiceCopyTest {
 			}
 		};
 		IntStream.range(0, 4).forEach(creator);
-		service.createServiceInstance(new PostgresCatalogConfig().catalog()
-				.getServiceDefinitions().get(0), "service_instance_id_" + 5,
-				PRODUCTION, "org_guid", "space_guid");
+		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+				serviceDef.getId(), PRODUCTION, "org_guid", "space_guid")
+				.withServiceInstanceId("service_instance_id" + 5).and()
+				.withServiceDefinition(serviceDef);
+
+		service.createServiceInstance(createServiceInstanceRequest);
 
 		List<InstancePair> instances = service.getProvisionedInstances();
 		assertThat(instances, hasSize(5));
@@ -129,7 +142,8 @@ public class PostgresServiceInstanceServiceCopyTest {
 			ServiceBrokerException, ServiceInstanceDoesNotExistException,
 			ServiceInstanceExistsException {
 		createServiceInstance();
-		service.updateServiceInstance(instance.getId(), PRODUCTION);
+		service.updateServiceInstance(new UpdateServiceInstanceRequest(
+				PRODUCTION).withInstanceId(instance.getId()));
 
 	}
 }

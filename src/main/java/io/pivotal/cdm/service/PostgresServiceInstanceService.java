@@ -50,35 +50,34 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 	}
 
 	@Override
-	public ServiceInstance createServiceInstance(ServiceDefinition service,
-			String serviceInsatnaceId, String planId, String organizationGuid,
-			String spaceGuid) throws ServiceInstanceExistsException,
-			ServiceBrokerException {
+	public ServiceInstance createServiceInstance(
+			CreateServiceInstanceRequest request)
+			throws ServiceInstanceExistsException, ServiceBrokerException {
 
-		log(serviceInsatnaceId, "Creating service instance", IN_PROGRESS);
-		throwIfDuplicate(serviceInsatnaceId);
+		String id = request.getServiceInstanceId();
+		log(id, "Creating service instance", IN_PROGRESS);
+		throwIfDuplicate(id);
 
 		try {
-			ServiceInstance instance = new ServiceInstance(serviceInsatnaceId,
-					service.getId(), planId, organizationGuid, spaceGuid, null);
-			String copyId = COPY.equals(planId) ? provider
+			ServiceInstance instance = new ServiceInstance(request);
+			String copyId = COPY.equals(request.getPlanId()) ? provider
 					.createCopy(sourceInstanceId) : sourceInstanceId;
-			instances.put(serviceInsatnaceId,
-					new MutablePair<String, ServiceInstance>(copyId, instance));
+			instances.put(id, new MutablePair<String, ServiceInstance>(copyId,
+					instance));
 
-			log(serviceInsatnaceId, "Created service instance", COMPLETE);
+			log(id, "Created service instance", COMPLETE);
 			return instance;
 		} catch (Exception e) {
-			log(serviceInsatnaceId,
-					"Failed to create service instance: " + e.getMessage(),
+			log(id, "Failed to create service instance: " + e.getMessage(),
 					FAILED);
 			throw e;
 		}
 	}
 
 	@Override
-	public ServiceInstance deleteServiceInstance(String id, String serviceId,
-			String planId) throws ServiceBrokerException {
+	public ServiceInstance deleteServiceInstance(
+			DeleteServiceInstanceRequest request) throws ServiceBrokerException {
+		String id = request.getServiceInstanceId();
 		log(id, "Deleting service instance", IN_PROGRESS);
 		Pair<String, ServiceInstance> instance = instances.get(id);
 		if (null == instance) {
@@ -87,7 +86,7 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 		}
 
 		try {
-			if (COPY.equals(planId)) {
+			if (COPY.equals(request.getPlanId())) {
 				provider.deleteCopy(instance.getLeft());
 			}
 			log(id, "Deleted service instance", COMPLETE);
@@ -105,13 +104,15 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 	}
 
 	@Override
-	public ServiceInstance updateServiceInstance(String id, String planId)
+	public ServiceInstance updateServiceInstance(
+			UpdateServiceInstanceRequest request)
 			throws ServiceInstanceUpdateNotSupportedException,
 			ServiceBrokerException, ServiceInstanceDoesNotExistException {
 
-		log(id, "Updating service instance is not supported", FAILED);
+		log(request.getServiceInstanceId(),
+				"Updating service instance is not supported", FAILED);
 		throw new ServiceInstanceUpdateNotSupportedException(
-				"Cannot update plan");
+				"Cannot update plan " + request.getPlanId());
 	}
 
 	public String getInstanceIdForServiceInstance(String serviceInstanceId) {

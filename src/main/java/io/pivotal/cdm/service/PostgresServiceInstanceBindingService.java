@@ -50,11 +50,12 @@ public class PostgresServiceInstanceBindingService implements
 
 	@Override
 	public ServiceInstanceBinding createServiceInstanceBinding(
-			String bindingId, ServiceInstance serviceInstance,
-			String serviceId, String planId, String appGuid)
+			CreateServiceInstanceBindingRequest request)
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 
+		String bindingId = request.getBindingId();
+		String appGuid = request.getAppGuid();
 		log(bindingId, "Creating service binding for app " + appGuid,
 				IN_PROGRESS);
 
@@ -62,10 +63,11 @@ public class PostgresServiceInstanceBindingService implements
 
 		try {
 			String instance = instanceService
-					.getInstanceIdForServiceInstance(serviceInstance.getId());
+					.getInstanceIdForServiceInstance(request
+							.getServiceInstanceId());
 
 			ServiceInstanceBinding binding = new ServiceInstanceBinding(
-					bindingId, serviceInstance.getId(),
+					bindingId, request.getServiceInstanceId(),
 					provider.getCreds(instance), null, appGuid);
 
 			instances.put(bindingId, binding);
@@ -80,9 +82,10 @@ public class PostgresServiceInstanceBindingService implements
 
 	@Override
 	public ServiceInstanceBinding deleteServiceInstanceBinding(
-			String bindingId, ServiceInstance instance, String serviceId,
-			String planId) throws ServiceBrokerException {
-		return instances.remove(bindingId);
+			DeleteServiceInstanceBindingRequest request)
+			throws ServiceBrokerException {
+		log(request.getBindingId(), "Removed binding", COMPLETE);
+		return instances.remove(request.getBindingId());
 	}
 
 	public List<InstancePair> getAppToCopyBinding() {
