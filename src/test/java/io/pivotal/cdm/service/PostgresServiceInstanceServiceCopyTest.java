@@ -55,18 +55,6 @@ public class PostgresServiceInstanceServiceCopyTest {
 	}
 
 	@Test
-	public void itShouldUpdateWhatItStores()
-			throws ServiceInstanceUpdateNotSupportedException,
-			ServiceBrokerException, ServiceInstanceDoesNotExistException,
-			ServiceInstanceExistsException {
-		createServiceInstance();
-		assertThat(service.updateServiceInstance(instance.getId(), "new_plan")
-				.getPlanId(), is(equalTo("new_plan")));
-		assertThat(service.getServiceInstance(instance.getId()).getPlanId(),
-				is(equalTo("new_plan")));
-	}
-
-	@Test
 	public void itShouldCreateACopyWhenProvisionedWithACopyPlan()
 			throws ServiceBrokerException, ServiceInstanceExistsException {
 		createServiceInstance();
@@ -82,13 +70,6 @@ public class PostgresServiceInstanceServiceCopyTest {
 				is(equalTo(instance)));
 		assertNull(service.getServiceInstance(instance.getId()));
 		verify(provider).deleteCopy("copy_instance");
-	}
-
-	@Test(expected = ServiceInstanceDoesNotExistException.class)
-	public void itShoudlBarfWhenWeUpdateSomethingThatIsNotThere()
-			throws ServiceInstanceUpdateNotSupportedException,
-			ServiceBrokerException, ServiceInstanceDoesNotExistException {
-		service.updateServiceInstance("fake", "fake");
 	}
 
 	@Test
@@ -140,5 +121,15 @@ public class PostgresServiceInstanceServiceCopyTest {
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
 		createServiceInstance();
+	}
+
+	@Test(expected = ServiceInstanceUpdateNotSupportedException.class)
+	public void itShouldThrowForUpdateSErvice()
+			throws ServiceInstanceUpdateNotSupportedException,
+			ServiceBrokerException, ServiceInstanceDoesNotExistException,
+			ServiceInstanceExistsException {
+		createServiceInstance();
+		service.updateServiceInstance(instance.getId(), PRODUCTION);
+
 	}
 }

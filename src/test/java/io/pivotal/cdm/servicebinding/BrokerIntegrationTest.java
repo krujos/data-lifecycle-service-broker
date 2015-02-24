@@ -67,6 +67,40 @@ public class BrokerIntegrationTest {
 	public void itCreatesAnAMIAndImageAndCleansUp() throws JSONException,
 			InterruptedException {
 
+		provisionAndBindCopy();
+
+		// Try to delete the wrong thing;
+		givenTheBroker()
+				.delete("/v2/service_instances/1234/service_bindings/nothing?service_id=postgrescdm&plan_id=copy")
+				.then().statusCode(410);
+
+		validateBinding();
+
+		unprovisionAndUnbindCopy();
+
+		givenTheBroker()
+				.delete("/v2/service_instances/1234?service_id=postgrescdm&plan_id=copy")
+				.then().statusCode(410);
+
+		validateNothingProvisioned();
+	}
+
+	private void unprovisionAndUnbindCopy() {
+		givenTheBroker()
+				.delete("/v2/service_instances/1234/service_bindings/1234521?service_id=postgrescdm&plan_id=copy")
+				.then().statusCode(200);
+
+		validateNoBinding();
+
+		givenTheBroker()
+				.delete("/v2/service_instances/1234?service_id=postgrescdm&plan_id=copy")
+				.then().statusCode(200);
+
+		validateNothingProvisioned();
+	}
+
+	private void provisionAndBindCopy() throws JSONException,
+			InterruptedException {
 		validateNoBinding();
 		validateNothingProvisioned();
 		JSONObject serviceInstance = new JSONObject();
@@ -91,31 +125,6 @@ public class BrokerIntegrationTest {
 
 		validateBinding();
 		Thread.sleep(10000); // Let AWS get the machines moving;
-
-		// Try to delete the wrong thing;
-		givenTheBroker()
-				.delete("/v2/service_instances/1234/service_bindings/nothing?service_id=postgrescdm&plan_id=copy")
-				.then().statusCode(410);
-
-		validateBinding();
-
-		givenTheBroker()
-				.delete("/v2/service_instances/1234/service_bindings/1234521?service_id=postgrescdm&plan_id=copy")
-				.then().statusCode(200);
-
-		validateNoBinding();
-
-		givenTheBroker()
-				.delete("/v2/service_instances/1234?service_id=postgrescdm&plan_id=copy")
-				.then().statusCode(200);
-
-		validateNothingProvisioned();
-
-		givenTheBroker()
-				.delete("/v2/service_instances/1234?service_id=postgrescdm&plan_id=copy")
-				.then().statusCode(410);
-
-		validateNothingProvisioned();
 	}
 
 	private RequestSpecification givenTheBroker() {

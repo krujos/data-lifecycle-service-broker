@@ -109,28 +109,9 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 			throws ServiceInstanceUpdateNotSupportedException,
 			ServiceBrokerException, ServiceInstanceDoesNotExistException {
 
-		log(id, "Updating service instance", IN_PROGRESS);
-		throwIfNotFound(id);
-
-		ServiceInstance oldInstance = instances.get(id).getRight();
-		instances
-				.get(id)
-				.setValue(
-						new ServiceInstance(id, oldInstance
-								.getServiceDefinitionId(), planId, oldInstance
-								.getOrganizationGuid(), oldInstance
-								.getSpaceGuid(), oldInstance.getDashboardUrl()));
-
-		log(id, "Updated service instance", COMPLETE);
-		return instances.get(id).getRight();
-	}
-
-	private void throwIfNotFound(String id)
-			throws ServiceInstanceDoesNotExistException {
-		if (!instances.containsKey(id)) {
-			log(id, "Cannot find service instance ", FAILED);
-			throw new ServiceInstanceDoesNotExistException(id);
-		}
+		log(id, "Updating service instance is not supported", FAILED);
+		throw new ServiceInstanceUpdateNotSupportedException(
+				"Cannot update plan");
 	}
 
 	public String getInstanceIdForServiceInstance(String serviceInstanceId) {

@@ -1,6 +1,6 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.config.PostgresCatalogConfig.PRODUCTION;
+import static io.pivotal.cdm.config.PostgresCatalogConfig.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
@@ -79,5 +79,14 @@ public class PostgresServiceInstanceServiceProdTest {
 		createServiceInstance();
 		service.deleteServiceInstance(instance.getId(), "serviceId", PRODUCTION);
 		verify(brokerRepo, times(4)).save(any(BrokerAction.class));
+	}
+
+	@Test(expected = ServiceInstanceUpdateNotSupportedException.class)
+	public void itShouldThrowForUpdateService()
+			throws ServiceInstanceUpdateNotSupportedException,
+			ServiceBrokerException, ServiceInstanceDoesNotExistException,
+			ServiceInstanceExistsException {
+		createServiceInstance();
+		service.updateServiceInstance(instance.getId(), COPY);
 	}
 }

@@ -21,6 +21,7 @@ public class PostgresCatalogConfig {
 				getCopyMetadata()));
 		postgresServiceDefinition = new ServiceDefinition("postgrescdm",
 				"Postgres", "Postgres Running in AWS", true, plans);
+		postgresServiceDefinition.setPlanUpdatable(false);
 	}
 
 	private Map<String, Object> getProdMetadata() {
