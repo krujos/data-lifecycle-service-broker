@@ -47,7 +47,7 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 
 	private CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
 			"postgrescdm", COPY, "test_app").withBindingId(bindingId).and()
-			.withServiceInstanceId(serviceInstance.getId());
+			.withServiceInstanceId(serviceInstance.getServiceInstanceId());
 
 	@Before
 	public void setUp() throws ServiceInstanceBindingExistsException,
@@ -67,7 +67,7 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 
 		when(
 				instanceService.getInstanceIdForServiceInstance(serviceInstance
-						.getId())).thenReturn("test_instance");
+						.getServiceInstanceId())).thenReturn("test_instance");
 
 		bindResult = bindingService
 				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
@@ -102,7 +102,7 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 			ServiceBrokerException {
 		when(
 				instanceService.getInstanceIdForServiceInstance(serviceInstance
-						.getId())).thenReturn("test_copy");
+						.getServiceInstanceId())).thenReturn("test_copy");
 
 		IntConsumer consumer = new IntConsumer() {
 			@Override

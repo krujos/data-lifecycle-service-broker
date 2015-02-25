@@ -62,7 +62,8 @@ public class PostgresServiceInstanceServiceProdTest {
 		createServiceInstance();
 		assertNotNull(service
 				.deleteServiceInstance(new DeleteServiceInstanceRequest(
-						instance.getId(), "serviceId", PRODUCTION)));
+						instance.getServiceInstanceId(), "serviceId",
+						PRODUCTION)));
 		verifyZeroInteractions(provider);
 	}
 
@@ -70,8 +71,8 @@ public class PostgresServiceInstanceServiceProdTest {
 	public void itReturnsTheProdInstanceIdForServiceInstanceId()
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
-		assertThat(service.getInstanceIdForServiceInstance(instance.getId()),
-				is(equalTo("source_instance_id")));
+		assertThat(service.getInstanceIdForServiceInstance(instance
+				.getServiceInstanceId()), is(equalTo("source_instance_id")));
 	}
 
 	@Test
@@ -86,7 +87,7 @@ public class PostgresServiceInstanceServiceProdTest {
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
 		service.deleteServiceInstance(new DeleteServiceInstanceRequest(instance
-				.getId(), "serviceId", PRODUCTION));
+				.getServiceInstanceId(), "serviceId", PRODUCTION));
 		verify(brokerRepo, times(4)).save(any(BrokerAction.class));
 	}
 
@@ -97,6 +98,6 @@ public class PostgresServiceInstanceServiceProdTest {
 			ServiceInstanceExistsException {
 		createServiceInstance();
 		service.updateServiceInstance(new UpdateServiceInstanceRequest(COPY)
-				.withInstanceId(instance.getId()));
+				.withInstanceId(instance.getServiceInstanceId()));
 	}
 }

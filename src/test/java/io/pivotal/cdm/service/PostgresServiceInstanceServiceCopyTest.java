@@ -57,8 +57,8 @@ public class PostgresServiceInstanceServiceCopyTest {
 	public void itShouldStoreWhatItCreates()
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
-		assertThat(instance,
-				is(equalTo(service.getServiceInstance(instance.getId()))));
+		assertThat(instance, is(equalTo(service.getServiceInstance(instance
+				.getServiceInstanceId()))));
 	}
 
 	@Test
@@ -74,9 +74,10 @@ public class PostgresServiceInstanceServiceCopyTest {
 		createServiceInstance();
 		assertThat(
 				service.deleteServiceInstance(new DeleteServiceInstanceRequest(
-						instance.getId(), instance.getServiceDefinitionId(),
-						instance.getPlanId())), is(equalTo(instance)));
-		assertNull(service.getServiceInstance(instance.getId()));
+						instance.getServiceInstanceId(), instance
+								.getServiceDefinitionId(), instance.getPlanId())),
+				is(equalTo(instance)));
+		assertNull(service.getServiceInstance(instance.getServiceInstanceId()));
 		verify(provider).deleteCopy("copy_instance");
 	}
 
@@ -84,8 +85,8 @@ public class PostgresServiceInstanceServiceCopyTest {
 	public void itReturnsTheCopyInstanceIdForServiceInstanceId()
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
-		assertThat(service.getInstanceIdForServiceInstance(instance.getId()),
-				is(equalTo("copy_instance")));
+		assertThat(service.getInstanceIdForServiceInstance(instance
+				.getServiceInstanceId()), is(equalTo("copy_instance")));
 	}
 
 	@Test
@@ -143,7 +144,7 @@ public class PostgresServiceInstanceServiceCopyTest {
 			ServiceInstanceExistsException {
 		createServiceInstance();
 		service.updateServiceInstance(new UpdateServiceInstanceRequest(
-				PRODUCTION).withInstanceId(instance.getId()));
+				PRODUCTION).withInstanceId(instance.getServiceInstanceId()));
 
 	}
 }

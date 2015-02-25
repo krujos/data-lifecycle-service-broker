@@ -63,8 +63,11 @@ public class PostgresServiceInstanceBindingServiceProdTest {
 		ServiceInstanceBinding bindResult = bindingService
 				.createServiceInstanceBinding(new CreateServiceInstanceBindingRequest(
 						serviceInstance.getServiceDefinitionId(), PRODUCTION,
-						"test_app").withBindingId(bindingId).and()
-						.withServiceInstanceId(serviceInstance.getId()));
+						"test_app")
+						.withBindingId(bindingId)
+						.and()
+						.withServiceInstanceId(
+								serviceInstance.getServiceInstanceId()));
 		assertThat(bindResult.getId(), is(equalTo(bindingId)));
 	}
 

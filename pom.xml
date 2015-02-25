@@ -41,7 +41,7 @@
 		<dependency>
 			<groupId>com.github.krujos</groupId>
 			<artifactId>spring-boot-cf-service-broker.spring-boot-cf-service-broker</artifactId>
-			<version>383e1a5</version>
+			<version>b48b4f0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.cloudfoundry</groupId>

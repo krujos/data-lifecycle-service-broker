@@ -120,7 +120,7 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 		return instances
 				.values()
 				.stream()
-				.filter(s -> s.getRight().getId().equals(serviceInstanceId))
+				.filter(s -> s.getRight().getServiceInstanceId().equals(serviceInstanceId))
 				.findFirst().
 				get().getLeft();
 		//@formatter:on
