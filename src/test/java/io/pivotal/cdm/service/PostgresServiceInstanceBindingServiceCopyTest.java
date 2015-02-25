@@ -45,9 +45,7 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	@Mock
 	BrokerActionRepository repo;
 
-	private CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
-			"postgrescdm", COPY, "test_app").withBindingId(bindingId).and()
-			.withServiceInstanceId(serviceInstance.getServiceInstanceId());
+	private CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest;
 
 	@Before
 	public void setUp() throws ServiceInstanceBindingExistsException,
@@ -55,6 +53,10 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 		MockitoAnnotations.initMocks(this);
 		bindingService = new PostgresServiceInstanceBindingService(provider,
 				instanceService, repo);
+
+		createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
+				"postgrescdm", COPY, "test_app").withBindingId(bindingId).and()
+				.withServiceInstanceId(serviceInstance.getServiceInstanceId());
 	}
 
 	@Test
@@ -94,6 +96,21 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
 		bindResult = bindingService
 				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
+	}
+
+	@Test(expected = ServiceInstanceBindingExistsException.class)
+	public void itShouldNotBindToTheSameAppTwice()
+			throws ServiceInstanceBindingExistsException,
+			ServiceBrokerException {
+		bindResult = bindingService
+				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
+		createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
+				"postgrescdm", COPY, "test_app")
+				.withBindingId(bindingId + "foo").and()
+				.withServiceInstanceId(serviceInstance.getServiceInstanceId());
+		bindResult = bindingService
+				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
+
 	}
 
 	@Test

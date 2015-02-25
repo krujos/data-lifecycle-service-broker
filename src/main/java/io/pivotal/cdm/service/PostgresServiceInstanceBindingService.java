@@ -25,6 +25,7 @@ public class PostgresServiceInstanceBindingService implements
 	private Logger logger = Logger
 			.getLogger(PostgresServiceInstanceBindingService.class);
 
+	// BindingId, Binding
 	private Map<String, ServiceInstanceBinding> instances = new HashMap<String, ServiceInstanceBinding>();
 
 	private PostgresServiceInstanceService instanceService;
@@ -59,7 +60,8 @@ public class PostgresServiceInstanceBindingService implements
 		log(bindingId, "Creating service binding for app " + appGuid,
 				IN_PROGRESS);
 
-		throwIfDuplicate(bindingId);
+		throwIfDuplicateBinding(bindingId);
+		throwIfCopyAlreadyBoundToApp(appGuid);
 
 		try {
 			String instance = instanceService
@@ -78,6 +80,17 @@ public class PostgresServiceInstanceBindingService implements
 			log(bindingId, "Failed to bind app " + appGuid, FAILED);
 			throw e;
 		}
+	}
+
+	private void throwIfCopyAlreadyBoundToApp(String appGuid)
+			throws ServiceInstanceBindingExistsException {
+		List<ServiceInstanceBinding> boundInstances = instances.values()
+				.stream().filter(s -> appGuid.equals(s.getAppGuid()))
+				.collect(Collectors.toList());
+		if (0 < boundInstances.size())
+			throw new ServiceInstanceBindingExistsException(
+					boundInstances.get(0));
+
 	}
 
 	@Override
@@ -112,7 +125,7 @@ public class PostgresServiceInstanceBindingService implements
 		brokerRepo.save(new BrokerAction(id, state, msg));
 	}
 
-	private void throwIfDuplicate(String bindingId)
+	private void throwIfDuplicateBinding(String bindingId)
 			throws ServiceInstanceBindingExistsException {
 		if (instances.containsKey(bindingId)) {
 			throw new ServiceInstanceBindingExistsException(
