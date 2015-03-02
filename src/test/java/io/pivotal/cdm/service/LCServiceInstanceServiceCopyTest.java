@@ -1,26 +1,27 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.config.PostgresCatalogConfig.*;
+import static io.pivotal.cdm.config.LCCatalogConfig.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import io.pivotal.cdm.config.PostgresCatalogConfig;
+import io.pivotal.cdm.config.LCCatalogConfig;
 import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
-import java.util.List;
-import java.util.function.IntConsumer;
+import java.util.*;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.tuple.*;
 import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.*;
 import org.junit.*;
 import org.mockito.*;
 
-public class PostgresServiceInstanceServiceCopyTest {
+public class LCServiceInstanceServiceCopyTest {
 
-	private PostgresServiceInstanceService service;
+	private LCServiceInstanceService service;
 	private ServiceInstance instance;
 
 	@Mock
@@ -29,15 +30,18 @@ public class PostgresServiceInstanceServiceCopyTest {
 	@Mock
 	private BrokerActionRepository brokerRepo;
 
-	private ServiceDefinition serviceDef = new PostgresCatalogConfig()
-			.catalog().getServiceDefinitions().get(0);
+	private ServiceDefinition serviceDef = new LCCatalogConfig().catalog()
+			.getServiceDefinitions().get(0);
+
+	@Mock
+	LCServiceInstanceManager instanceManager;
 
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
-		service = new PostgresServiceInstanceService(provider,
-				"source_instance_id", brokerRepo);
+		service = new LCServiceInstanceService(provider, "source_instance_id",
+				brokerRepo, instanceManager);
 
 	}
 
@@ -57,8 +61,7 @@ public class PostgresServiceInstanceServiceCopyTest {
 	public void itShouldStoreWhatItCreates()
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
-		assertThat(instance, is(equalTo(service.getServiceInstance(instance
-				.getServiceInstanceId()))));
+		verify(instanceManager).saveInstance(instance, "copy_instance");
 	}
 
 	@Test
@@ -72,12 +75,15 @@ public class PostgresServiceInstanceServiceCopyTest {
 	public void itDeletesWhatItShould() throws ServiceBrokerException,
 			ServiceInstanceExistsException {
 		createServiceInstance();
+		String id = instance.getServiceInstanceId();
+		when(instanceManager.getInstance(id)).thenReturn(instance);
+		when(instanceManager.removeInstance(id)).thenReturn(instance);
+		when(instanceManager.getCopyIdForInstance(id)).thenReturn(
+				"copy_instance");
 		assertThat(
 				service.deleteServiceInstance(new DeleteServiceInstanceRequest(
-						instance.getServiceInstanceId(), instance
-								.getServiceDefinitionId(), instance.getPlanId())),
-				is(equalTo(instance)));
-		assertNull(service.getServiceInstance(instance.getServiceInstanceId()));
+						id, instance.getServiceDefinitionId(), instance
+								.getPlanId())), is(equalTo(instance)));
 		verify(provider).deleteCopy("copy_instance");
 	}
 
@@ -85,6 +91,10 @@ public class PostgresServiceInstanceServiceCopyTest {
 	public void itReturnsTheCopyInstanceIdForServiceInstanceId()
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
+		Collection<Pair<String, ServiceInstance>> instances = Arrays
+				.asList(new ImmutablePair<String, ServiceInstance>(
+						"copy_instance", instance));
+		when(instanceManager.getInstances()).thenReturn(instances);
 		assertThat(service.getInstanceIdForServiceInstance(instance
 				.getServiceInstanceId()), is(equalTo("copy_instance")));
 	}
@@ -93,47 +103,36 @@ public class PostgresServiceInstanceServiceCopyTest {
 	public void itReturnsTheCorrectListOfServices()
 			throws ServiceBrokerException, ServiceInstanceExistsException {
 
-		when(provider.createCopy("source_instance_id")).thenReturn(
-				"copy_instance1", "copy_instance2", "copy_instance3",
-				"copy_instance4");
+		Collection<Pair<String, ServiceInstance>> instances = createInstances();
 
-		IntConsumer creator = new IntConsumer() {
+		when(instanceManager.getInstances()).thenReturn(instances);
 
-			@Override
-			public void accept(int i) {
-				try {
-					CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
-							serviceDef.getId(), COPY, "org_guid", "space_guid")
-							.withServiceInstanceId("service_instance_id" + i)
-							.and().withServiceDefinition(serviceDef);
+		List<InstancePair> provisionedInstances = service
+				.getProvisionedInstances();
+		assertThat(provisionedInstances, hasSize(5));
+		assertTrue(provisionedInstances.contains(new InstancePair(
+				"source_instance_id", "copy_instance2")));
+		assertTrue(provisionedInstances.contains(new InstancePair(
+				"source_instance_id", "source_instance_id")));
+	}
 
-					service.createServiceInstance(createServiceInstanceRequest);
-				} catch (ServiceInstanceExistsException
-						| ServiceBrokerException e) {
-					fail(e.getMessage());
-				}
-			}
-		};
-		IntStream.range(0, 4).forEach(creator);
-		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
-				serviceDef.getId(), PRODUCTION, "org_guid", "space_guid")
-				.withServiceInstanceId("service_instance_id" + 5).and()
-				.withServiceDefinition(serviceDef);
-
-		service.createServiceInstance(createServiceInstanceRequest);
-
-		List<InstancePair> instances = service.getProvisionedInstances();
-		assertThat(instances, hasSize(5));
-		assertTrue(instances.contains(new InstancePair("source_instance_id",
-				"copy_instance2")));
-		assertTrue(instances.contains(new InstancePair("source_instance_id",
-				"source_instance_id")));
+	private Collection<Pair<String, ServiceInstance>> createInstances()
+			throws ServiceInstanceExistsException, ServiceBrokerException {
+		Collection<Pair<String, ServiceInstance>> instances = new ArrayList<Pair<String, ServiceInstance>>();
+		IntStream.range(0, 4).forEach(
+				i -> instances.add(new ImmutablePair<String, ServiceInstance>(
+						"copy_instance" + i, null)));
+		instances.add(new ImmutablePair<String, ServiceInstance>(
+				"source_instance_id", null));
+		return instances;
 	}
 
 	@Test(expected = ServiceInstanceExistsException.class)
 	public void itShouldThrowIfInstanceAlreadyExists()
 			throws ServiceInstanceExistsException, ServiceBrokerException {
-		createServiceInstance();
+		when(instanceManager.getInstance(any())).thenReturn(
+				new ServiceInstance(new CreateServiceInstanceRequest(null,
+						null, null, null)));
 		createServiceInstance();
 	}
 

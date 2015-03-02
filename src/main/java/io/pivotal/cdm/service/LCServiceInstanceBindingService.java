@@ -6,7 +6,7 @@ import io.pivotal.cdm.model.*;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -17,20 +17,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class PostgresServiceInstanceBindingService implements
+public class LCServiceInstanceBindingService implements
 		ServiceInstanceBindingService {
 
 	private CopyProvider provider;
 
 	private Logger logger = Logger
-			.getLogger(PostgresServiceInstanceBindingService.class);
+			.getLogger(LCServiceInstanceBindingService.class);
 
-	// BindingId, Binding
-	private Map<String, ServiceInstanceBinding> instances = new HashMap<String, ServiceInstanceBinding>();
+	private LCServiceInstanceBindingManager bindings;
 
-	private PostgresServiceInstanceService instanceService;
+	private LCServiceInstanceService instanceService;
 
-	BrokerActionRepository brokerRepo;
+	private BrokerActionRepository brokerRepo;
 
 	/**
 	 * Build a new binding service.
@@ -38,15 +37,23 @@ public class PostgresServiceInstanceBindingService implements
 	 * @param CopyProvider
 	 *            to gather credentials from
 	 * @param instanceService
+	 *            to get instance information from
+	 * @param brokerRepo
+	 *            to save current action states to
+	 * @param bindings
+	 *            manager to save bindings
+	 * @param instanceService
 	 *            to retrieve instance id's for creds from
 	 */
 	@Autowired
-	public PostgresServiceInstanceBindingService(CopyProvider provider,
-			PostgresServiceInstanceService instanceService,
-			BrokerActionRepository brokerRepo) {
+	public LCServiceInstanceBindingService(CopyProvider provider,
+			LCServiceInstanceService instanceService,
+			BrokerActionRepository brokerRepo,
+			LCServiceInstanceBindingManager bindings) {
 		this.provider = provider;
 		this.instanceService = instanceService;
 		this.brokerRepo = brokerRepo;
+		this.bindings = bindings;
 	}
 
 	@Override
@@ -61,7 +68,7 @@ public class PostgresServiceInstanceBindingService implements
 				IN_PROGRESS);
 
 		throwIfDuplicateBinding(bindingId);
-		throwIfCopyAlreadyBoundToApp(appGuid);
+		throwIfCopyAlreadyBoundToApp(appGuid, request.getServiceInstanceId());
 
 		try {
 			String instance = instanceService
@@ -72,7 +79,7 @@ public class PostgresServiceInstanceBindingService implements
 					bindingId, request.getServiceInstanceId(),
 					provider.getCreds(instance), null, appGuid);
 
-			instances.put(bindingId, binding);
+			bindings.saveBinding(binding);
 			log(bindingId, "Created service binding for app " + appGuid,
 					COMPLETE);
 			return binding;
@@ -82,29 +89,41 @@ public class PostgresServiceInstanceBindingService implements
 		}
 	}
 
-	private void throwIfCopyAlreadyBoundToApp(String appGuid)
+	private void throwIfCopyAlreadyBoundToApp(String appGuid,
+			String serviceInstanceId)
 			throws ServiceInstanceBindingExistsException {
-		List<ServiceInstanceBinding> boundInstances = instances.values()
-				.stream().filter(s -> appGuid.equals(s.getAppGuid()))
+		List<ServiceInstanceBinding> boundInstances = bindings
+				.getBindings()
+				.stream()
+				.filter(s -> appGuid.equals(s.getAppGuid())
+						&& serviceInstanceId.equals(s.getServiceInstanceId()))
 				.collect(Collectors.toList());
-		if (0 < boundInstances.size())
+		if (0 < boundInstances.size()) {
 			throw new ServiceInstanceBindingExistsException(
 					boundInstances.get(0));
-
+		}
 	}
 
 	@Override
 	public ServiceInstanceBinding deleteServiceInstanceBinding(
 			DeleteServiceInstanceBindingRequest request)
 			throws ServiceBrokerException {
-		log(request.getBindingId(), "Removed binding", COMPLETE);
-		return instances.remove(request.getBindingId());
+		try {
+			log(request.getBindingId(), "Removing binding ", IN_PROGRESS);
+			ServiceInstanceBinding binding = bindings.removeBinding(request
+					.getBindingId());
+			log(request.getBindingId(), "Removing binding ", COMPLETE);
+
+			return binding;
+		} catch (Exception e) {
+			log(request.getBindingId(), "Failed to remove binding ", FAILED);
+			throw e;
+		}
 	}
 
 	public List<InstancePair> getAppToCopyBinding() {
 		//@formatter:off
-		return instances
-				.values()
+		return bindings.getBindings()
 				.stream()
 				.map(v -> new InstancePair(
 						v.getAppGuid(),
@@ -127,9 +146,9 @@ public class PostgresServiceInstanceBindingService implements
 
 	private void throwIfDuplicateBinding(String bindingId)
 			throws ServiceInstanceBindingExistsException {
-		if (instances.containsKey(bindingId)) {
+		if (null != bindings.getBinding(bindingId)) {
 			throw new ServiceInstanceBindingExistsException(
-					instances.get(bindingId));
+					bindings.getBinding(bindingId));
 		}
 	}
 }

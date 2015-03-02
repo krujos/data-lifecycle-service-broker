@@ -1,6 +1,6 @@
 package io.pivotal.cdm.aws;
 
-import static io.pivotal.cdm.config.PostgresCatalogConfig.PRODUCTION;
+import static io.pivotal.cdm.config.LCCatalogConfig.PRODUCTION;
 import io.pivotal.cdm.provider.CopyProvider;
 
 import java.net.*;

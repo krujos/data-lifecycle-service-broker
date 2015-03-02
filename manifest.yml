@@ -1,0 +1,10 @@
+---
+applications:
+- name: lifecycle-sb
+  memory: 1G
+  instances: 1
+  path: target/cdm-service-broker-0.0.1-SNAPSHOT.jar
+  services:
+    - lifecycle-sb-db
+  env:
+    SPRING_PROFILES_ACTIVE: cloud

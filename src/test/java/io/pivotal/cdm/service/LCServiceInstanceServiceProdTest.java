@@ -1,23 +1,26 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.config.PostgresCatalogConfig.*;
+import static io.pivotal.cdm.config.LCCatalogConfig.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import io.pivotal.cdm.config.PostgresCatalogConfig;
+import io.pivotal.cdm.config.LCCatalogConfig;
 import io.pivotal.cdm.model.BrokerAction;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.*;
 import org.junit.*;
 import org.mockito.*;
 
-public class PostgresServiceInstanceServiceProdTest {
+public class LCServiceInstanceServiceProdTest {
 
-	private PostgresServiceInstanceService service;
+	private LCServiceInstanceService service;
 	private ServiceInstance instance;
 
 	@Mock
@@ -26,19 +29,22 @@ public class PostgresServiceInstanceServiceProdTest {
 	@Mock
 	BrokerActionRepository brokerRepo;
 
+	@Mock
+	LCServiceInstanceManager instanceManager;
+
 	// TODO DRY w/ copy test
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
-		service = new PostgresServiceInstanceService(provider,
-				"source_instance_id", brokerRepo);
+		service = new LCServiceInstanceService(provider, "source_instance_id",
+				brokerRepo, instanceManager);
 
 	}
 
 	private void createServiceInstance() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
-		ServiceDefinition serviceDef = new PostgresCatalogConfig().catalog()
+		ServiceDefinition serviceDef = new LCCatalogConfig().catalog()
 				.getServiceDefinitions().get(0);
 		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
 				serviceDef.getId(), PRODUCTION, "org_guid", "space_guid")
@@ -59,11 +65,15 @@ public class PostgresServiceInstanceServiceProdTest {
 	@Test
 	public void itShouldNotDeleteACopyForProd() throws ServiceBrokerException,
 			ServiceInstanceExistsException {
+
 		createServiceInstance();
+		String id = instance.getServiceInstanceId();
+		when(instanceManager.getInstance(id)).thenReturn(instance);
+		when(instanceManager.removeInstance(id)).thenReturn(instance);
+
 		assertNotNull(service
-				.deleteServiceInstance(new DeleteServiceInstanceRequest(
-						instance.getServiceInstanceId(), "serviceId",
-						PRODUCTION)));
+				.deleteServiceInstance(new DeleteServiceInstanceRequest(id,
+						"serviceId", PRODUCTION)));
 		verifyZeroInteractions(provider);
 	}
 
@@ -71,6 +81,10 @@ public class PostgresServiceInstanceServiceProdTest {
 	public void itReturnsTheProdInstanceIdForServiceInstanceId()
 			throws ServiceInstanceExistsException, ServiceBrokerException {
 		createServiceInstance();
+		ImmutablePair<String, ServiceInstance> immutablePair = new ImmutablePair<String, ServiceInstance>(
+				"source_instance_id", instance);
+		when(instanceManager.getInstances()).thenReturn(
+				Arrays.asList(immutablePair));
 		assertThat(service.getInstanceIdForServiceInstance(instance
 				.getServiceInstanceId()), is(equalTo("source_instance_id")));
 	}

@@ -1,9 +1,10 @@
 package io.pivotal.cdm.servicebinding;
 
 import static com.jayway.restassured.RestAssured.given;
-import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
+import static io.pivotal.cdm.config.LCCatalogConfig.COPY;
 import static org.hamcrest.Matchers.*;
 import io.pivotal.cdm.CdmServiceBrokerApplication;
+import io.pivotal.cdm.repo.BindingRepository;
 
 import org.junit.*;
 import org.junit.experimental.categories.Category;
@@ -48,6 +49,9 @@ public class BrokerIntegrationTest {
 	@Value("#{environment.SOURCE_INSTANCE_ID}")
 	private String sourceInstanceId;
 
+	@Autowired
+	private BindingRepository bindingRepo;
+
 	@Before
 	public void setUp() {
 		RestAssured.port = port;
@@ -55,6 +59,8 @@ public class BrokerIntegrationTest {
 		RequestSpecification requestSpecification = new RequestSpecBuilder()
 				.addHeader("X-Broker-Api-Version", "2.4").build();
 		RestAssured.requestSpecification = requestSpecification;
+
+		bindingRepo.deleteAll();
 	}
 
 	@Test

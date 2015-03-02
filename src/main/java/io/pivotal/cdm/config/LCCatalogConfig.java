@@ -6,14 +6,14 @@ import org.cloudfoundry.community.servicebroker.model.*;
 import org.springframework.context.annotation.*;
 
 @Configuration
-public class PostgresCatalogConfig {
+public class LCCatalogConfig {
 
 	ServiceDefinition postgresServiceDefinition;
 
 	public static String PRODUCTION = "prod";
 	public static String COPY = "copy";
 
-	public PostgresCatalogConfig() {
+	public LCCatalogConfig() {
 		List<Plan> plans = new ArrayList<Plan>();
 		plans.add(new Plan(PRODUCTION, "Production", "The production database",
 				getProdMetadata()));

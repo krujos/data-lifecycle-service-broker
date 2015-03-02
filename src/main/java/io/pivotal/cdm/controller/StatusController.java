@@ -15,10 +15,10 @@ import com.amazonaws.util.json.*;
 public class StatusController {
 
 	@Autowired
-	private PostgresServiceInstanceService instanceService;
+	private LCServiceInstanceService instanceService;
 
 	@Autowired
-	private PostgresServiceInstanceBindingService bindingService;
+	private LCServiceInstanceBindingService bindingService;
 
 	@RequestMapping(value = "/api/instances", method = RequestMethod.GET)
 	ResponseEntity<List<InstancePair>> getServiceInstances() {

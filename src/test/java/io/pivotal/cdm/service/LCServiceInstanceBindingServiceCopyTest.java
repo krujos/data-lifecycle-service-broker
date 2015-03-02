@@ -1,6 +1,6 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
+import static io.pivotal.cdm.config.LCCatalogConfig.COPY;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
@@ -21,29 +21,33 @@ import org.mockito.*;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 
-public class PostgresServiceInstanceBindingServiceCopyTest {
+public class LCServiceInstanceBindingServiceCopyTest {
 
 	@Mock
 	AmazonEC2Client ec2Client;
 
-	private PostgresServiceInstanceBindingService bindingService;
+	private LCServiceInstanceBindingService bindingService;
 
 	private ServiceInstance serviceInstance = new ServiceInstance(
 			new CreateServiceInstanceRequest("test_service_def_id", COPY,
-					"org", "space"));
+					"org", "space")
+					.withServiceInstanceId("test_service_instance_id"));
 
 	private ServiceInstanceBinding bindResult;
 
 	private static String bindingId = "test_binding_copy";
 
 	@Mock
-	CopyProvider provider;
+	private CopyProvider provider;
 
 	@Mock
-	PostgresServiceInstanceService instanceService;
+	private LCServiceInstanceService instanceService;
 
 	@Mock
-	BrokerActionRepository repo;
+	private BrokerActionRepository actionRepo;
+
+	@Mock
+	LCServiceInstanceBindingManager bindingManager;
 
 	private CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest;
 
@@ -51,8 +55,9 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	public void setUp() throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
-		bindingService = new PostgresServiceInstanceBindingService(provider,
-				instanceService, repo);
+
+		bindingService = new LCServiceInstanceBindingService(provider,
+				instanceService, actionRepo, bindingManager);
 
 		createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
 				"postgrescdm", COPY, "test_app").withBindingId(bindingId).and()
@@ -92,8 +97,10 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	public void duplicateServiceShouldThrow()
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
-		bindResult = bindingService
-				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
+
+		when(bindingManager.getBinding(any())).thenReturn(
+				new ServiceInstanceBinding(null, null, null, null, null));
+
 		bindResult = bindingService
 				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
 	}
@@ -102,6 +109,12 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	public void itShouldNotBindToTheSameAppTwice()
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
+
+		ArrayList<ServiceInstanceBinding> list = new ArrayList<ServiceInstanceBinding>();
+		list.add(new ServiceInstanceBinding("foo", serviceInstance
+				.getServiceInstanceId(), null, null, "test_app"));
+		when(bindingManager.getBindings()).thenReturn(list);
+
 		bindResult = bindingService
 				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
 		createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
@@ -110,6 +123,19 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 				.withServiceInstanceId(serviceInstance.getServiceInstanceId());
 		bindResult = bindingService
 				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
+	}
+
+	public void duplicatePlansWithDifferentServiceInstancesAreGood()
+			throws ServiceInstanceBindingExistsException,
+			ServiceBrokerException {
+		assertNotNull(bindingService
+				.createServiceInstanceBinding(createServiceInstanceBindingRequest));
+		createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
+				"postgrescdm", COPY, "test_app")
+				.withBindingId(bindingId + "foo").and()
+				.withServiceInstanceId("Another service instance");
+		assertNotNull(bindingService
+				.createServiceInstanceBinding(createServiceInstanceBindingRequest));
 
 	}
 
@@ -117,25 +143,13 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 	public void itShouldReturnAppToInstancePairsAndBindToMutipleApps()
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
+
 		when(
 				instanceService.getInstanceIdForServiceInstance(serviceInstance
 						.getServiceInstanceId())).thenReturn("test_copy");
 
-		IntConsumer consumer = new IntConsumer() {
-			@Override
-			public void accept(int i) {
-				createServiceInstanceBindingRequest.withBindingId("bind" + i)
-						.setAppGuid("test_app" + i);
-				try {
-					bindingService
-							.createServiceInstanceBinding(createServiceInstanceBindingRequest);
-				} catch (ServiceInstanceBindingExistsException
-						| ServiceBrokerException e) {
-					fail("Failed to create service instance bindings");
-				}
-			}
-		};
-		IntStream.range(1, 4).forEach(consumer);
+		List<ServiceInstanceBinding> bindings = buildServiceInstanceBindings();
+		when(bindingManager.getBindings()).thenReturn(bindings);
 
 		List<InstancePair> appBindings = bindingService.getAppToCopyBinding();
 		assertThat(appBindings, hasSize(3));
@@ -143,12 +157,35 @@ public class PostgresServiceInstanceBindingServiceCopyTest {
 				"test_copy")));
 	}
 
+	private List<ServiceInstanceBinding> buildServiceInstanceBindings() {
+		List<ServiceInstanceBinding> list = new ArrayList<ServiceInstanceBinding>();
+
+		IntConsumer consumer = new IntConsumer() {
+			@Override
+			public void accept(int i) {
+				createServiceInstanceBindingRequest.withBindingId("bind" + i)
+						.setAppGuid("test_app" + i);
+				try {
+					list.add(bindingService
+							.createServiceInstanceBinding(createServiceInstanceBindingRequest));
+				} catch (ServiceInstanceBindingExistsException
+						| ServiceBrokerException e) {
+					fail("Failed to create service instance bindings");
+				}
+			}
+		};
+		IntStream.range(1, 4).forEach(consumer);
+		return list;
+	}
+
 	@Test
 	public void itShouldUpdateItsStatusDuringTheBind()
 			throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
+		when(bindingManager.getBindings()).thenReturn(
+				new ArrayList<ServiceInstanceBinding>());
 		bindingService
 				.createServiceInstanceBinding(createServiceInstanceBindingRequest);
-		verify(repo, times(2)).save(any(BrokerAction.class));
+		verify(actionRepo, times(2)).save(any(BrokerAction.class));
 	}
 }

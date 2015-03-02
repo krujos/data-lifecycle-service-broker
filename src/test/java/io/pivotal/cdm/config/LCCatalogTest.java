@@ -4,16 +4,15 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 import org.cloudfoundry.community.servicebroker.model.Catalog;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
-public class PostgresCatalogTest {
+public class LCCatalogTest {
 
 	Catalog pgCat;
 
 	@Before
 	public void setUp() {
-		pgCat = new PostgresCatalogConfig().catalog();
+		pgCat = new LCCatalogConfig().catalog();
 	}
 
 	@Test

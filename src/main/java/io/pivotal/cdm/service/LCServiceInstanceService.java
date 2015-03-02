@@ -1,16 +1,15 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.config.PostgresCatalogConfig.COPY;
+import static io.pivotal.cdm.config.LCCatalogConfig.COPY;
 import static io.pivotal.cdm.model.BrokerActionState.*;
 import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.model.*;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.*;
 import org.apache.log4j.Logger;
 import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.*;
@@ -26,12 +25,10 @@ import org.springframework.stereotype.Service;
  *
  */
 @Service
-public class PostgresServiceInstanceService implements ServiceInstanceService {
-	private Logger logger = Logger
-			.getLogger(PostgresServiceInstanceService.class);
+public class LCServiceInstanceService implements ServiceInstanceService {
+	private Logger logger = Logger.getLogger(LCServiceInstanceService.class);
 
-	// The Mapping is Map<serviceInstanceId, Pair<CopyID, ServiceInstance>
-	Map<String, Pair<String, ServiceInstance>> instances = new HashMap<String, Pair<String, ServiceInstance>>();
+	LCServiceInstanceManager instanceManager;
 
 	private CopyProvider provider;
 
@@ -40,13 +37,15 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 	private BrokerActionRepository brokerRepo;
 
 	@Autowired
-	public PostgresServiceInstanceService(
+	public LCServiceInstanceService(
 			final CopyProvider provider,
 			@Value("#{environment.SOURCE_INSTANCE_ID}") final String sourceInstanceId,
-			BrokerActionRepository brokerRepo) {
+			final BrokerActionRepository brokerRepo,
+			final LCServiceInstanceManager instanceManager) {
 		this.provider = provider;
 		this.sourceInstanceId = sourceInstanceId;
 		this.brokerRepo = brokerRepo;
+		this.instanceManager = instanceManager;
 	}
 
 	@Override
@@ -62,8 +61,8 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 			ServiceInstance instance = new ServiceInstance(request);
 			String copyId = COPY.equals(request.getPlanId()) ? provider
 					.createCopy(sourceInstanceId) : sourceInstanceId;
-			instances.put(id, new MutablePair<String, ServiceInstance>(copyId,
-					instance));
+
+			instanceManager.saveInstance(instance, copyId);
 
 			log(id, "Created service instance", COMPLETE);
 			return instance;
@@ -79,7 +78,7 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 			DeleteServiceInstanceRequest request) throws ServiceBrokerException {
 		String id = request.getServiceInstanceId();
 		log(id, "Deleting service instance", IN_PROGRESS);
-		Pair<String, ServiceInstance> instance = instances.get(id);
+		ServiceInstance instance = instanceManager.getInstance(id);
 		if (null == instance) {
 			log(id, "Service instance not found", FAILED);
 			return null;
@@ -87,10 +86,10 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 
 		try {
 			if (COPY.equals(request.getPlanId())) {
-				provider.deleteCopy(instance.getLeft());
+				provider.deleteCopy(instanceManager.getCopyIdForInstance(id));
 			}
 			log(id, "Deleted service instance", COMPLETE);
-			return instances.remove(id).getRight();
+			return instanceManager.removeInstance(id);
 		} catch (ServiceBrokerException e) {
 			log(id, "Failed to delete service instance: " + e.getMessage(),
 					FAILED);
@@ -100,7 +99,7 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 
 	@Override
 	public ServiceInstance getServiceInstance(String id) {
-		return instances.containsKey(id) ? instances.get(id).getRight() : null;
+		return instanceManager.getInstance(id);
 	}
 
 	@Override
@@ -117,8 +116,7 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 
 	public String getInstanceIdForServiceInstance(String serviceInstanceId) {
 		//@formatter:off
-		return instances
-				.values()
+		return instanceManager.getInstances()
 				.stream()
 				.filter(s -> s.getRight().getServiceInstanceId().equals(serviceInstanceId))
 				.findFirst().
@@ -128,8 +126,7 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 
 	public List<InstancePair> getProvisionedInstances() {
 		//@formatter:off
-		return instances.
-				values()
+		return instanceManager.getInstances()
 				.stream()
 				.map(i -> new InstancePair(sourceInstanceId, i.getLeft()))
 				.collect(Collectors.toList());
@@ -153,10 +150,10 @@ public class PostgresServiceInstanceService implements ServiceInstanceService {
 
 	private void throwIfDuplicate(String id)
 			throws ServiceInstanceExistsException {
-		if (instances.containsKey(id)) {
+		if (null != instanceManager.getInstance(id)) {
 			log(id, "Duplicate service instance requested", FAILED);
-			throw new ServiceInstanceExistsException(instances.get(id)
-					.getRight());
+			throw new ServiceInstanceExistsException(
+					instanceManager.getInstance(id));
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.config.PostgresCatalogConfig.PRODUCTION;
+import static io.pivotal.cdm.config.LCCatalogConfig.PRODUCTION;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -17,12 +17,12 @@ import org.mockito.*;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 
-public class PostgresServiceInstanceBindingServiceProdTest {
+public class LCServiceInstanceBindingServiceProdTest {
 
 	@Mock
 	AmazonEC2Client ec2Client;
 
-	private PostgresServiceInstanceBindingService bindingService;
+	private LCServiceInstanceBindingService bindingService;
 
 	CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
 			"test_service", PRODUCTION, "org", "space")
@@ -38,18 +38,20 @@ public class PostgresServiceInstanceBindingServiceProdTest {
 	private static String bindingId = "test_binding";
 
 	@Mock
-	PostgresServiceInstanceService instanceService;
+	LCServiceInstanceService instanceService;
 
 	@Mock
 	BrokerActionRepository repo;
+
+	@Mock
+	LCServiceInstanceBindingManager bindingManager;
 
 	@Before
 	public void setUp() throws ServiceInstanceBindingExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
-		bindingService = new PostgresServiceInstanceBindingService(provider,
-				instanceService, repo);
-
+		bindingService = new LCServiceInstanceBindingService(provider,
+				instanceService, repo, bindingManager);
 	}
 
 	@Test
