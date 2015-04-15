@@ -51,6 +51,21 @@ public class LCServiceInstanceManager {
 		if (null == i) {
 			return null;
 		}
+		// TODO Gross, the base should handle this for us.
+		OperationState state = null;
+		switch (i.getLastOperationState()) {
+		case "in progress":
+			state = OperationState.IN_PROGRESS;
+			break;
+		case "succeeded":
+			state = OperationState.SUCCEEDED;
+			break;
+		case "failed":
+			state = OperationState.FAILED;
+			break;
+		default:
+			assert (false);
+		}
 		//@formatter:off
 		return new ServiceInstance(
 				new CreateServiceInstanceRequest(
@@ -59,7 +74,14 @@ public class LCServiceInstanceManager {
 						i.getOrgGuid(),
 						i.getSpaceGuid())
 					.withServiceInstanceId(i.getServiceInstanceId()))
-				.withDashboardUrl(i.getDashboardUrl());
+				.withDashboardUrl(i.getDashboardUrl())
+				.and()
+				.withLastOperation(
+						new ServiceInstanceLastOperation(
+								i.getLastOperationDescription(), 
+								state
+						)
+				);
 		//@formatter:on
 	}
 }

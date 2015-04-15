@@ -17,6 +17,7 @@ import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.*;
 import org.junit.*;
 import org.mockito.*;
+import org.springframework.core.task.SyncTaskExecutor;
 
 public class LCServiceInstanceServiceProdTest {
 
@@ -38,33 +39,30 @@ public class LCServiceInstanceServiceProdTest {
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		service = new LCServiceInstanceService(provider, "source_instance_id",
-				brokerRepo, instanceManager);
+				brokerRepo, instanceManager, new SyncTaskExecutor());
 
 	}
 
-	private void createServiceInstance() throws ServiceInstanceExistsException,
-			ServiceBrokerException {
+	private void createServiceInstance() throws Exception {
 		ServiceDefinition serviceDef = new LCCatalogConfig().catalog()
 				.getServiceDefinitions().get(0);
 		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
 				serviceDef.getId(), PRODUCTION, "org_guid", "space_guid")
 				.withServiceInstanceId("service_instance_id").and()
-				.withServiceDefinition(serviceDef);
+				.withServiceDefinition(serviceDef).withAsyncClient(true);
 
 		instance = service.createServiceInstance(createServiceInstanceRequest);
 		verify(provider, never()).createCopy(any());
 	}
 
 	@Test
-	public void itShouldNotCreateACopyForProd()
-			throws ServiceInstanceExistsException, ServiceBrokerException {
+	public void itShouldNotCreateACopyForProd() throws Exception {
 		createServiceInstance();
 		verifyZeroInteractions(provider);
 	}
 
 	@Test
-	public void itShouldNotDeleteACopyForProd() throws ServiceBrokerException,
-			ServiceInstanceExistsException {
+	public void itShouldNotDeleteACopyForProd() throws Exception {
 
 		createServiceInstance();
 		String id = instance.getServiceInstanceId();
@@ -73,13 +71,13 @@ public class LCServiceInstanceServiceProdTest {
 
 		assertNotNull(service
 				.deleteServiceInstance(new DeleteServiceInstanceRequest(id,
-						"serviceId", PRODUCTION)));
+						"serviceId", PRODUCTION, true)));
 		verifyZeroInteractions(provider);
 	}
 
 	@Test
 	public void itReturnsTheProdInstanceIdForServiceInstanceId()
-			throws ServiceInstanceExistsException, ServiceBrokerException {
+			throws Exception {
 		createServiceInstance();
 		ImmutablePair<String, ServiceInstance> immutablePair = new ImmutablePair<String, ServiceInstance>(
 				"source_instance_id", instance);
@@ -90,26 +88,21 @@ public class LCServiceInstanceServiceProdTest {
 	}
 
 	@Test
-	public void itShouldDocumentItsInFlightCreateActions()
-			throws ServiceInstanceExistsException, ServiceBrokerException {
+	public void itShouldDocumentItsInFlightCreateActions() throws Exception {
 		createServiceInstance();
 		verify(brokerRepo, times(2)).save(any(BrokerAction.class));
 	}
 
 	@Test
-	public void itShouldDocumentItsInFlightDeleteActions()
-			throws ServiceInstanceExistsException, ServiceBrokerException {
+	public void itShouldDocumentItsInFlightDeleteActions() throws Exception {
 		createServiceInstance();
 		service.deleteServiceInstance(new DeleteServiceInstanceRequest(instance
-				.getServiceInstanceId(), "serviceId", PRODUCTION));
+				.getServiceInstanceId(), "serviceId", PRODUCTION, true));
 		verify(brokerRepo, times(4)).save(any(BrokerAction.class));
 	}
 
 	@Test(expected = ServiceInstanceUpdateNotSupportedException.class)
-	public void itShouldThrowForUpdateService()
-			throws ServiceInstanceUpdateNotSupportedException,
-			ServiceBrokerException, ServiceInstanceDoesNotExistException,
-			ServiceInstanceExistsException {
+	public void itShouldThrowForUpdateService() throws Exception {
 		createServiceInstance();
 		service.updateServiceInstance(new UpdateServiceInstanceRequest(COPY)
 				.withInstanceId(instance.getServiceInstanceId()));

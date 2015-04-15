@@ -3,7 +3,7 @@ package io.pivotal.cdm.service;
 import static io.pivotal.cdm.config.LCCatalogConfig.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import io.pivotal.cdm.config.LCCatalogConfig;
 import io.pivotal.cdm.dto.InstancePair;
@@ -18,6 +18,7 @@ import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.*;
 import org.junit.*;
 import org.mockito.*;
+import org.springframework.core.task.SyncTaskExecutor;
 
 public class LCServiceInstanceServiceCopyTest {
 
@@ -41,39 +42,44 @@ public class LCServiceInstanceServiceCopyTest {
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		service = new LCServiceInstanceService(provider, "source_instance_id",
-				brokerRepo, instanceManager);
+				brokerRepo, instanceManager, new SyncTaskExecutor());
 
 	}
 
 	private void createServiceInstance() throws ServiceInstanceExistsException,
-			ServiceBrokerException {
+			ServiceBrokerException, ServiceBrokerAsyncRequiredException {
 		when(provider.createCopy("source_instance_id")).thenReturn(
 				"copy_instance");
-		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
-				serviceDef.getId(), COPY, "org_guid", "space_guid")
-				.withServiceInstanceId("service_instance_id").and()
-				.withServiceDefinition(serviceDef);
+		CreateServiceInstanceRequest createServiceInstanceRequest = newCreateServiceInstanceRequest();
 
 		instance = service.createServiceInstance(createServiceInstanceRequest);
 	}
 
+	private CreateServiceInstanceRequest newCreateServiceInstanceRequest() {
+		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+				serviceDef.getId(), COPY, "org_guid", "space_guid")
+				.withServiceInstanceId("service_instance_id").and()
+				.withServiceDefinition(serviceDef).withAsyncClient(true);
+		return createServiceInstanceRequest;
+	}
+
 	@Test
 	public void itShouldStoreWhatItCreates()
-			throws ServiceInstanceExistsException, ServiceBrokerException {
+			throws ServiceInstanceExistsException, ServiceBrokerException,
+			ServiceBrokerAsyncRequiredException {
 		createServiceInstance();
 		verify(instanceManager).saveInstance(instance, "copy_instance");
 	}
 
 	@Test
 	public void itShouldCreateACopyWhenProvisionedWithACopyPlan()
-			throws ServiceBrokerException, ServiceInstanceExistsException {
+			throws Exception {
 		createServiceInstance();
 		verify(provider).createCopy("source_instance_id");
 	}
 
 	@Test
-	public void itDeletesWhatItShould() throws ServiceBrokerException,
-			ServiceInstanceExistsException {
+	public void itDeletesWhatItShould() throws Exception {
 		createServiceInstance();
 		String id = instance.getServiceInstanceId();
 		when(instanceManager.getInstance(id)).thenReturn(instance);
@@ -83,13 +89,14 @@ public class LCServiceInstanceServiceCopyTest {
 		assertThat(
 				service.deleteServiceInstance(new DeleteServiceInstanceRequest(
 						id, instance.getServiceDefinitionId(), instance
-								.getPlanId())), is(equalTo(instance)));
+								.getPlanId(), true)), is(equalTo(instance)));
 		verify(provider).deleteCopy("copy_instance");
+		verify(instanceManager).removeInstance(instance.getServiceInstanceId());
 	}
 
 	@Test
 	public void itReturnsTheCopyInstanceIdForServiceInstanceId()
-			throws ServiceInstanceExistsException, ServiceBrokerException {
+			throws Exception {
 		createServiceInstance();
 		Collection<Pair<String, ServiceInstance>> instances = Arrays
 				.asList(new ImmutablePair<String, ServiceInstance>(
@@ -128,8 +135,7 @@ public class LCServiceInstanceServiceCopyTest {
 	}
 
 	@Test(expected = ServiceInstanceExistsException.class)
-	public void itShouldThrowIfInstanceAlreadyExists()
-			throws ServiceInstanceExistsException, ServiceBrokerException {
+	public void itShouldThrowIfInstanceAlreadyExists() throws Exception {
 		when(instanceManager.getInstance(any())).thenReturn(
 				new ServiceInstance(new CreateServiceInstanceRequest(null,
 						null, null, null)));
@@ -137,13 +143,49 @@ public class LCServiceInstanceServiceCopyTest {
 	}
 
 	@Test(expected = ServiceInstanceUpdateNotSupportedException.class)
-	public void itShouldThrowForUpdateSErvice()
-			throws ServiceInstanceUpdateNotSupportedException,
-			ServiceBrokerException, ServiceInstanceDoesNotExistException,
-			ServiceInstanceExistsException {
+	public void itShouldThrowForUpdateService() throws Exception {
 		createServiceInstance();
 		service.updateServiceInstance(new UpdateServiceInstanceRequest(
 				PRODUCTION).withInstanceId(instance.getServiceInstanceId()));
 
+	}
+
+	@Test(expected = ServiceBrokerAsyncRequiredException.class)
+	public void itShouldThrowForSyncServiceDeletion() throws Exception {
+		service.deleteServiceInstance(new DeleteServiceInstanceRequest(null,
+				null, null, false));
+	}
+
+	@Test(expected = ServiceBrokerAsyncRequiredException.class)
+	public void itShouldThrowForSyncServiceCreation() throws Exception {
+		service.createServiceInstance(new CreateServiceInstanceRequest()
+				.withAsyncClient(false));
+	}
+
+	@Test
+	public void itShouldSaveTheInstnaceAsFailedIfDeprovisionFails()
+			throws Exception {
+
+		ServiceInstance theInstance = new ServiceInstance(
+				newCreateServiceInstanceRequest());
+
+		doThrow(new ServiceBrokerException("Problem!")).when(provider)
+				.deleteCopy(anyString());
+
+		when(instanceManager.getInstance(anyString())).thenReturn(theInstance);
+		when(instanceManager.getCopyIdForInstance(anyString())).thenReturn(
+				"copy_id");
+
+		ServiceInstance failedInstance = service
+				.deleteServiceInstance(new DeleteServiceInstanceRequest(
+						theInstance.getServiceInstanceId(), theInstance
+								.getServiceDefinitionId(), COPY, true));
+
+		assertThat(failedInstance.getServiceInstanceLastOperation().getState(),
+				is(equalTo("failed")));
+
+		// Once for in progress, once for failed.
+		verify(instanceManager, times(2)).saveInstance(any(), anyString());
+		assertTrue(failedInstance.isAsync());
 	}
 }

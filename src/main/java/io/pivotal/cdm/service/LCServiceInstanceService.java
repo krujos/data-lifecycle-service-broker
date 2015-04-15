@@ -15,6 +15,7 @@ import org.cloudfoundry.community.servicebroker.exception.*;
 import org.cloudfoundry.community.servicebroker.model.*;
 import org.cloudfoundry.community.servicebroker.service.ServiceInstanceService;
 import org.springframework.beans.factory.annotation.*;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
 /**
@@ -36,46 +37,46 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 
 	private BrokerActionRepository brokerRepo;
 
+	private TaskExecutor executor;
+
 	@Autowired
 	public LCServiceInstanceService(
 			final CopyProvider provider,
 			@Value("#{environment.SOURCE_INSTANCE_ID}") final String sourceInstanceId,
 			final BrokerActionRepository brokerRepo,
-			final LCServiceInstanceManager instanceManager) {
+			final LCServiceInstanceManager instanceManager,
+			final TaskExecutor executor) {
 		this.provider = provider;
 		this.sourceInstanceId = sourceInstanceId;
 		this.brokerRepo = brokerRepo;
 		this.instanceManager = instanceManager;
+		this.executor = executor;
 	}
 
 	@Override
 	public ServiceInstance createServiceInstance(
 			CreateServiceInstanceRequest request)
-			throws ServiceInstanceExistsException, ServiceBrokerException {
+			throws ServiceInstanceExistsException, ServiceBrokerException,
+			ServiceBrokerAsyncRequiredException {
 
 		String id = request.getServiceInstanceId();
 		log(id, "Creating service instance", IN_PROGRESS);
 		throwIfDuplicate(id);
+		throwIfSync(request);
 
-		try {
-			ServiceInstance instance = new ServiceInstance(request);
-			String copyId = COPY.equals(request.getPlanId()) ? provider
-					.createCopy(sourceInstanceId) : sourceInstanceId;
+		ServiceInstance instance = new ServiceInstance(request).isAsync(true);
+		instanceManager.saveInstance(instance, null);
 
-			instanceManager.saveInstance(instance, copyId);
+		provision(request, id, instance);
+		return instance;
 
-			log(id, "Created service instance", COMPLETE);
-			return instance;
-		} catch (Exception e) {
-			log(id, "Failed to create service instance: " + e.getMessage(),
-					FAILED);
-			throw e;
-		}
 	}
 
 	@Override
 	public ServiceInstance deleteServiceInstance(
-			DeleteServiceInstanceRequest request) throws ServiceBrokerException {
+			DeleteServiceInstanceRequest request)
+			throws ServiceBrokerException, ServiceBrokerAsyncRequiredException {
+		throwIfSync(request);
 		String id = request.getServiceInstanceId();
 		log(id, "Deleting service instance", IN_PROGRESS);
 		ServiceInstance instance = instanceManager.getInstance(id);
@@ -83,18 +84,43 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 			log(id, "Service instance not found", FAILED);
 			return null;
 		}
+		String copyId = instanceManager.getCopyIdForInstance(id);
 
-		try {
-			if (COPY.equals(request.getPlanId())) {
-				provider.deleteCopy(instanceManager.getCopyIdForInstance(id));
+		instanceManager.saveInstance(
+				instance.withLastOperation(
+						new ServiceInstanceLastOperation("deprovisioning",
+								OperationState.IN_PROGRESS)).isAsync(true),
+				copyId);
+
+		deProvision(request, id, instance);
+
+		return instance;
+
+	}
+
+	private void deProvision(DeleteServiceInstanceRequest request, String id,
+			ServiceInstance instance) {
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					if (COPY.equals(request.getPlanId())) {
+						provider.deleteCopy(instanceManager
+								.getCopyIdForInstance(id));
+					}
+					log(id, "Deleted service instance", COMPLETE);
+					instanceManager.removeInstance(id);
+				} catch (ServiceBrokerException e) {
+					log(id,
+							"Failed to delete service instance: "
+									+ e.getMessage(), FAILED);
+					instance.withLastOperation(new ServiceInstanceLastOperation(
+							"failed to delete", OperationState.FAILED));
+					String copyId = instanceManager.getCopyIdForInstance(id);
+					instanceManager.saveInstance(instance, copyId);
+				}
 			}
-			log(id, "Deleted service instance", COMPLETE);
-			return instanceManager.removeInstance(id);
-		} catch (ServiceBrokerException e) {
-			log(id, "Failed to delete service instance: " + e.getMessage(),
-					FAILED);
-			throw e;
-		}
+		});
 	}
 
 	@Override
@@ -148,12 +174,58 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 		brokerRepo.save(new BrokerAction(id, state, msg));
 	}
 
+	private void provision(CreateServiceInstanceRequest request, String id,
+			ServiceInstance instance) {
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+
+					String copyId = sourceInstanceId;
+					if (COPY.equals(request.getPlanId())) {
+						copyId = provider.createCopy(sourceInstanceId);
+					}
+
+					instance.withLastOperation(new ServiceInstanceLastOperation(
+							"Provisioned", OperationState.SUCCEEDED));
+					instanceManager.saveInstance(instance, copyId);
+
+					log(id, "Created service instance", COMPLETE);
+				} catch (Exception e) {
+					instance.withLastOperation(new ServiceInstanceLastOperation(
+							e.getMessage(), OperationState.FAILED));
+					instanceManager.saveInstance(instance, null);
+					log(id,
+							"Failed to create service instance: "
+									+ e.getMessage(), FAILED);
+				}
+			}
+
+		});
+	}
+
 	private void throwIfDuplicate(String id)
 			throws ServiceInstanceExistsException {
 		if (null != instanceManager.getInstance(id)) {
 			log(id, "Duplicate service instance requested", FAILED);
 			throw new ServiceInstanceExistsException(
 					instanceManager.getInstance(id));
+		}
+	}
+
+	private void throwIfSync(CreateServiceInstanceRequest request)
+			throws ServiceBrokerAsyncRequiredException {
+		if (!request.hasAsyncClient()) {
+			throw new ServiceBrokerAsyncRequiredException(
+					"Lifecycle broker requires an async CloudController");
+		}
+	}
+
+	private void throwIfSync(DeleteServiceInstanceRequest request)
+			throws ServiceBrokerAsyncRequiredException {
+		if (!request.hasAsyncClient()) {
+			throw new ServiceBrokerAsyncRequiredException(
+					"Lifecycle broker requires an async CloudController");
 		}
 	}
 }

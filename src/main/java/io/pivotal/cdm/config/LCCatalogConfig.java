@@ -15,12 +15,12 @@ public class LCCatalogConfig {
 
 	public LCCatalogConfig() {
 		List<Plan> plans = new ArrayList<Plan>();
-		plans.add(new Plan(PRODUCTION, "Production", "The production database",
+		plans.add(new Plan(PRODUCTION, PRODUCTION, "The production datasource",
 				getProdMetadata()));
-		plans.add(new Plan(COPY, "Copy", "Copy of production database",
+		plans.add(new Plan(COPY, COPY, "Copy of production datasource",
 				getCopyMetadata()));
-		postgresServiceDefinition = new ServiceDefinition("postgrescdm",
-				"Postgres", "Postgres Running in AWS", true, plans);
+		postgresServiceDefinition = new ServiceDefinition("lifecycle-sb",
+				"lifecycle-sb", "Postgres Running in AWS", true, plans);
 		postgresServiceDefinition.setPlanUpdatable(false);
 	}
 

@@ -52,7 +52,9 @@ public class LCServiceInstanceManagerTest {
 	public void itConvertsProperly() {
 		ServiceInstance sourceInstance = new ServiceInstance(
 				new CreateServiceInstanceRequest("def_id", "plan_id", "org",
-						"space").withServiceInstanceId("the_id"));
+						"space").withServiceInstanceId("the_id"))
+				.withLastOperation(new ServiceInstanceLastOperation("failed",
+						OperationState.FAILED));
 		ServiceInstanceEntity entity = new ServiceInstanceEntity(
 				sourceInstance, "theCopy");
 
@@ -71,7 +73,12 @@ public class LCServiceInstanceManagerTest {
 				is(equalTo(sourceInstance.getServiceInstanceId())));
 		assertThat(returnedInstance.getSpaceGuid(),
 				is(equalTo(sourceInstance.getSpaceGuid())));
-
+		assertThat(returnedInstance.getServiceInstanceLastOperation()
+				.getDescription(), is(equalTo(sourceInstance
+				.getServiceInstanceLastOperation().getDescription())));
+		assertThat(returnedInstance.getServiceInstanceLastOperation()
+				.getState(), is(equalTo(sourceInstance
+				.getServiceInstanceLastOperation().getState())));
 	}
 
 	@Test

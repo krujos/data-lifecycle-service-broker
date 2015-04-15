@@ -1,13 +1,12 @@
 package io.pivotal.cdm.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 
 @Configuration
-public class AWSEc2Conifg {
+public class AWSEc2Config {
 
 	@Value("#{environment.AWS_S3_ACCESS_KEY}")
 	private String accessKey;

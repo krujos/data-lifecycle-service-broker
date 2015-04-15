@@ -24,6 +24,10 @@ public class ServiceInstanceEntity {
 
 	private String serviceDefinitionId;
 
+	private String lastOperationState;
+
+	private String lastOperationDescription;
+
 	public ServiceInstanceEntity() {
 	}
 
@@ -36,6 +40,10 @@ public class ServiceInstanceEntity {
 		this.setServiceInstanceId(instance.getServiceInstanceId());
 		this.setId(instance.getServiceInstanceId());
 		this.setSpaceGuid(instance.getSpaceGuid());
+		this.setLastOperationDescription(instance
+				.getServiceInstanceLastOperation().getDescription());
+		this.setLastOperationState(instance.getServiceInstanceLastOperation()
+				.getState());
 	}
 
 	public String getCopyId() {
@@ -100,6 +108,22 @@ public class ServiceInstanceEntity {
 
 	public void setId(String id) {
 		this.id = id;
+	}
+
+	public String getLastOperationState() {
+		return lastOperationState;
+	}
+
+	public void setLastOperationState(String lastOperationState) {
+		this.lastOperationState = lastOperationState;
+	}
+
+	public String getLastOperationDescription() {
+		return lastOperationDescription;
+	}
+
+	public void setLastOperationDescription(String lastOperationDescription) {
+		this.lastOperationDescription = lastOperationDescription;
 	}
 
 }
