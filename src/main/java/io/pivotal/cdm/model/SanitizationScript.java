@@ -8,9 +8,10 @@ import javax.persistence.Id;
 @Entity
 public class SanitizationScript {
 
+	final static long ID = 1;
+	
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	long id;
+	long id = ID;
 
 	private String script;
 
