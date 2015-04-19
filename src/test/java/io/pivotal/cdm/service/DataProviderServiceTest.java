@@ -48,23 +48,14 @@ public class DataProviderServiceTest {
 
 	@Test
 	public void itShouldGetTheScript() {
-		Iterable<SanitizationScript> scripts = new ArrayList<SanitizationScript>(
-				Arrays.asList(new SanitizationScript("fake scirpt")));
-		when(scriptRepo.findAll()).thenReturn(scripts);
-
+		when(scriptRepo.findOne(SanitizationScript.ID)).thenReturn(new
+				SanitizationScript("fake script"));
 		assertThat(service.getScript(), is(notNullValue()));
 	}
 
 	@Test
 	public void itShouldReturnNullIfTheresNoScript() {
-		when(scriptRepo.findAll()).thenReturn(null);
-		assertNull(service.getScript());
-	}
-
-	@Test
-	public void itShouldReturnNullIfTheresNoElements() {
-		when(scriptRepo.findAll()).thenReturn(
-				new ArrayList<SanitizationScript>());
+		when(scriptRepo.findOne(SanitizationScript.ID)).thenReturn(null);
 		assertNull(service.getScript());
 	}
 }

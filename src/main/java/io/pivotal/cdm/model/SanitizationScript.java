@@ -8,8 +8,8 @@ import javax.persistence.Id;
 @Entity
 public class SanitizationScript {
 
-	final static long ID = 1;
-	
+	public final static long ID = 1;
+
 	@Id
 	long id = ID;
 

@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 
 @Configuration
-public class AWSCopyProviderConfig {
+class AWSCopyProviderConfig {
 
 	@Value("#{environment.PROD_DB_USER}")
 	private String username;

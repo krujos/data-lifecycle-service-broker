@@ -26,12 +26,8 @@ public class DataProviderService {
 	 * @return the script if one has been set, null otherwise.
 	 */
 	public String getScript() {
-		Iterable<SanitizationScript> results = scriptRepo.findAll();
-		if (null != results) {
-			for (SanitizationScript s : results) {
-				return s.getScript();
-			}
-		}
-		return null;
+		SanitizationScript result = scriptRepo.findOne(SanitizationScript.ID);
+
+		return result == null ? null : result.getScript();
 	}
 }

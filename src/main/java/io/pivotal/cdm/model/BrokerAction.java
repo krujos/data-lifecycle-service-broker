@@ -16,7 +16,7 @@ public class BrokerAction {
 	private String action;
 
 	public BrokerAction() {
-	};
+	}
 
 	public BrokerAction(String id, BrokerActionState state, String action) {
 		this.setId(id);

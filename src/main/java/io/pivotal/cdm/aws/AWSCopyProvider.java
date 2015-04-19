@@ -21,9 +21,9 @@ public class AWSCopyProvider implements CopyProvider {
 
 	private HashMap<String, Object> creds;
 
-	private static String description = "CF Service Broker Snapshot Image";
+	private final static String description = "CF Service Broker Snapshot Image";
 
-	HashMap<String, String> instanceImages;
+	private HashMap<String, String> instanceImages;
 
 	/**
 	 *
