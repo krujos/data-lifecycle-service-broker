@@ -1,6 +1,7 @@
 package io.pivotal.cdm.repo;
 
-import io.pivotal.cdm.model.*;
+import io.pivotal.cdm.model.BrokerAction;
+import io.pivotal.cdm.model.BrokerActionState;
 
 import java.util.List;
 

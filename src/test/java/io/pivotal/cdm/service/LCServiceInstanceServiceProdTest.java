@@ -1,10 +1,17 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.config.LCCatalogConfig.*;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static io.pivotal.cdm.config.LCCatalogConfig.COPY;
+import static io.pivotal.cdm.config.LCCatalogConfig.PRODUCTION;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 import io.pivotal.cdm.config.LCCatalogConfig;
 import io.pivotal.cdm.model.BrokerAction;
 import io.pivotal.cdm.provider.CopyProvider;
@@ -13,10 +20,18 @@ import io.pivotal.cdm.repo.BrokerActionRepository;
 import java.util.Arrays;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.cloudfoundry.community.servicebroker.exception.*;
-import org.cloudfoundry.community.servicebroker.model.*;
-import org.junit.*;
-import org.mockito.*;
+import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
+import org.cloudfoundry.community.servicebroker.exception.ServiceInstanceExistsException;
+import org.cloudfoundry.community.servicebroker.exception.ServiceInstanceUpdateNotSupportedException;
+import org.cloudfoundry.community.servicebroker.model.CreateServiceInstanceRequest;
+import org.cloudfoundry.community.servicebroker.model.DeleteServiceInstanceRequest;
+import org.cloudfoundry.community.servicebroker.model.ServiceDefinition;
+import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
+import org.cloudfoundry.community.servicebroker.model.UpdateServiceInstanceRequest;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.core.task.SyncTaskExecutor;
 
 public class LCServiceInstanceServiceProdTest {

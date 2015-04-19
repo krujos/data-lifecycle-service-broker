@@ -38,7 +38,7 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
- 		<dependency>
+		<dependency>
 			<groupId>org.cloudfoundry</groupId>
 			<artifactId>spring-boot-cf-service-broker</artifactId>
 			<version>2.4.1</version>
@@ -87,6 +87,18 @@
 			<groupId>com.github.krujos</groupId>
 			<artifactId>aws-mockito-request-matcher</artifactId>
 			<version>v0.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.jayway.jsonpath</groupId>
+			<artifactId>json-path</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.jayway.jsonpath</groupId>
+			<artifactId>json-path-assert</artifactId>
+			<version>2.0.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

@@ -3,10 +3,16 @@ package io.pivotal.cdm.service;
 import io.pivotal.cdm.model.ServiceInstanceEntity;
 import io.pivotal.cdm.repo.ServiceInstanceRepo;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-import org.apache.commons.lang3.tuple.*;
-import org.cloudfoundry.community.servicebroker.model.*;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.cloudfoundry.community.servicebroker.model.CreateServiceInstanceRequest;
+import org.cloudfoundry.community.servicebroker.model.OperationState;
+import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
+import org.cloudfoundry.community.servicebroker.model.ServiceInstanceLastOperation;
 
 public class LCServiceInstanceManager {
 	private ServiceInstanceRepo repo;

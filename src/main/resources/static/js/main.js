@@ -78,3 +78,23 @@ serviceBrokerApp.controller("SearchController", function($scope, $http) {
     $scope.getComplete();
 
 });
+
+serviceBrokerApp.controller("SanitizeController", function($scope, $http) {
+	$scope.script = "Enter script here";
+	
+	$scope.get = function() { 
+		$http.get("/api/sanitizescript").success(function(data) {
+			if (null != data.script ) { 
+				$scope.script = data.script;
+			}
+		});
+	};
+	$scope.get();
+	
+	$scope.save = function() { 
+		$http.post("/api/sanitizescript", { script: $scope.script }).success(function(data) {
+		}).error(function(data, status, headers, config) { 
+			alert("Failed to save script");
+		});
+	};
+});

@@ -1,8 +1,11 @@
 package io.pivotal.cdm.service;
 
-import static io.pivotal.cdm.model.BrokerActionState.*;
+import static io.pivotal.cdm.model.BrokerActionState.COMPLETE;
+import static io.pivotal.cdm.model.BrokerActionState.FAILED;
+import static io.pivotal.cdm.model.BrokerActionState.IN_PROGRESS;
 import io.pivotal.cdm.dto.InstancePair;
-import io.pivotal.cdm.model.*;
+import io.pivotal.cdm.model.BrokerAction;
+import io.pivotal.cdm.model.BrokerActionState;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
@@ -10,8 +13,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
-import org.cloudfoundry.community.servicebroker.exception.*;
-import org.cloudfoundry.community.servicebroker.model.*;
+import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
+import org.cloudfoundry.community.servicebroker.exception.ServiceInstanceBindingExistsException;
+import org.cloudfoundry.community.servicebroker.model.CreateServiceInstanceBindingRequest;
+import org.cloudfoundry.community.servicebroker.model.DeleteServiceInstanceBindingRequest;
+import org.cloudfoundry.community.servicebroker.model.ServiceInstanceBinding;
 import org.cloudfoundry.community.servicebroker.service.ServiceInstanceBindingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

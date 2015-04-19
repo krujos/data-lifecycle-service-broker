@@ -3,8 +3,10 @@ package io.pivotal.cdm.aws;
 import static io.pivotal.cdm.config.LCCatalogConfig.PRODUCTION;
 import io.pivotal.cdm.provider.CopyProvider;
 
-import java.net.*;
-import java.util.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;

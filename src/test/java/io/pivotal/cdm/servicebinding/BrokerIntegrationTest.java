@@ -2,21 +2,27 @@ package io.pivotal.cdm.servicebinding;
 
 import static com.jayway.restassured.RestAssured.given;
 import static io.pivotal.cdm.config.LCCatalogConfig.COPY;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import io.pivotal.cdm.CdmServiceBrokerApplication;
 import io.pivotal.cdm.repo.BindingRepository;
 
 import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.boot.test.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.IntegrationTest;
+import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.util.json.*;
+import com.amazonaws.util.json.JSONException;
+import com.amazonaws.util.json.JSONObject;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.builder.RequestSpecBuilder;
 import com.jayway.restassured.specification.RequestSpecification;

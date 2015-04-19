@@ -1,6 +1,7 @@
 package io.pivotal.cdm.model;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 @Entity
 public class BrokerAction {

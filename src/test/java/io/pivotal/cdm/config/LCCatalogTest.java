@@ -4,7 +4,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 import org.cloudfoundry.community.servicebroker.model.Catalog;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 public class LCCatalogTest {
 

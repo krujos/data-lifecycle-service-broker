@@ -1,10 +1,13 @@
 package io.pivotal.cdm.config;
 
-import io.pivotal.cdm.aws.*;
+import io.pivotal.cdm.aws.AWSCopyProvider;
+import io.pivotal.cdm.aws.AWSHelper;
 import io.pivotal.cdm.provider.CopyProvider;
 
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.context.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 

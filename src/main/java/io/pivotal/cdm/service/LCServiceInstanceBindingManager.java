@@ -3,7 +3,8 @@ package io.pivotal.cdm.service;
 import io.pivotal.cdm.model.BindingEntity;
 import io.pivotal.cdm.repo.BindingRepository;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.cloudfoundry.community.servicebroker.model.ServiceInstanceBinding;
 import org.springframework.beans.factory.annotation.Autowired;

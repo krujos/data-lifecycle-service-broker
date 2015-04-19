@@ -1,6 +1,7 @@
 package io.pivotal.cdm.model;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 import org.cloudfoundry.community.servicebroker.model.ServiceInstanceBinding;
 
