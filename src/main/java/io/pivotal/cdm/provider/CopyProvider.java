@@ -17,7 +17,7 @@ public interface CopyProvider {
 	 * @throws ServiceBrokerException
 	 *             on error
 	 */
-	public abstract String createCopy(String instanceId)
+	String createCopy(String instanceId)
 			throws ServiceBrokerException;
 
 	/**
@@ -29,7 +29,7 @@ public interface CopyProvider {
 	 * @throws ServiceBrokerException
 	 *             on error
 	 */
-	public abstract void deleteCopy(final String instance)
+	void deleteCopy(final String instance)
 			throws ServiceBrokerException;
 
 	/**
@@ -37,6 +37,6 @@ public interface CopyProvider {
 	 * URI, username, password or whatever makes sense for your service. Will be
 	 * injected into your app.
 	 */
-	public abstract Map<String, Object> getCreds(final String instance)
+	Map<String, Object> getCreds(final String instance)
 			throws ServiceBrokerException;
 }
