@@ -28,6 +28,6 @@ public class DataProviderService {
 	public String getScript() {
 		SanitizationScript result = scriptRepo.findOne(SanitizationScript.ID);
 
-		return result != null ? result.getScript() : null;
+		return result == null ? null : result.getScript();
 	}
 }
