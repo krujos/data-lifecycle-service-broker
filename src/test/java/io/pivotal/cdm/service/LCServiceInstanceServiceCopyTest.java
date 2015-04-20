@@ -77,11 +77,10 @@ public class LCServiceInstanceServiceCopyTest {
 	}
 
 	private CreateServiceInstanceRequest newCreateServiceInstanceRequest() {
-		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+		return new CreateServiceInstanceRequest(
 				serviceDef.getId(), COPY, "org_guid", "space_guid")
 				.withServiceInstanceId("service_instance_id").and()
 				.withServiceDefinition(serviceDef).withAsyncClient(true);
-		return createServiceInstanceRequest;
 	}
 
 	@Test

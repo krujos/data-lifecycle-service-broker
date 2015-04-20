@@ -147,7 +147,7 @@ public class LCServiceInstanceManagerTest {
 
 	private Matcher<ServiceInstanceEntity> hasEntityWithId(String id) {
 
-		Matcher<ServiceInstanceEntity> matches = new BaseMatcher<ServiceInstanceEntity>() {
+		return new BaseMatcher<ServiceInstanceEntity>() {
 			@Override
 			public boolean matches(Object item) {
 				return ((ServiceInstanceEntity) item).getId().equals(id);
@@ -158,6 +158,5 @@ public class LCServiceInstanceManagerTest {
 			}
 
 		};
-		return matches;
 	}
 }

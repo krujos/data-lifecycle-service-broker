@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 
 @Configuration
-public class AWSEc2Config {
+class AWSEc2Config {
 
 	@Value("#{environment.AWS_S3_ACCESS_KEY}")
 	private String accessKey;

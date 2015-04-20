@@ -34,7 +34,7 @@ import com.amazonaws.services.ec2.model.Volume;
 public class AWSHelper {
 	private Logger log = Logger.getLogger(AWSHelper.class);
 
-	public AmazonEC2Client ec2Client;
+	private AmazonEC2Client ec2Client;
 
 	private String subnetId;
 
