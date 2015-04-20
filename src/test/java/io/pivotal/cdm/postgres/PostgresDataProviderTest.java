@@ -1,6 +1,7 @@
 package io.pivotal.cdm.postgres;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -26,13 +27,14 @@ public class PostgresDataProviderTest {
 	@Mock
 	Connection connection;
 
-	@InjectMocks
+	@Mock
 	PostgresScriptExecutor executor;
 
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
-		dataProvider = new PostgresDataProvider();
+		dataProvider = new PostgresDataProvider(executor);
+
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -46,9 +48,13 @@ public class PostgresDataProviderTest {
 
 	@Test
 	public void itShouldExecuteTheScript() throws SQLException {
-
+		Map<String, Object> creds = new HashMap<>();
+		creds.put("username", "username");
+		creds.put("password", "password");
+		creds.put("uri", "fake_uri");
 		String script = "This is the script;";
-		verify(executor, times(1)).execute(script, any());
+		dataProvider.sanitize(script, creds);
+		verify(executor, times(1)).execute(anyString(), any());
 
 	}
 }

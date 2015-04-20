@@ -12,8 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class PostgresDataProvider implements DataProvider {
 
-	@Autowired
 	private PostgresScriptExecutor executor;
+
+	@Autowired
+	public PostgresDataProvider(PostgresScriptExecutor executor) {
+		this.executor = executor;
+	}
 
 	@Override
 	public void sanitize(String script, Map<String, Object> creds) {
