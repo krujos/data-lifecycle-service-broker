@@ -47,7 +47,8 @@ public class LCServiceInstanceManagerTest {
 	public void itShouldSaveAnInstance() {
 		instanceManager.saveInstance(new ServiceInstance(
 				new CreateServiceInstanceRequest("def_id", "plan_id", "org",
-						"space").withServiceInstanceId("the_id")), "the_copy");
+						"space", true).withServiceInstanceId("the_id")),
+				"the_copy");
 		verify(repo, times(1)).save(argThat(hasEntityWithId("the_id")));
 	}
 
@@ -67,7 +68,7 @@ public class LCServiceInstanceManagerTest {
 	public void itConvertsProperly() {
 		ServiceInstance sourceInstance = new ServiceInstance(
 				new CreateServiceInstanceRequest("def_id", "plan_id", "org",
-						"space").withServiceInstanceId("the_id"))
+						"space", true).withServiceInstanceId("the_id"))
 				.withLastOperation(new ServiceInstanceLastOperation("failed",
 						OperationState.FAILED));
 		ServiceInstanceEntity entity = new ServiceInstanceEntity(
@@ -141,7 +142,7 @@ public class LCServiceInstanceManagerTest {
 	 */
 	private ServiceInstanceEntity makeSIEntity() {
 		return new ServiceInstanceEntity(new ServiceInstance(
-				new CreateServiceInstanceRequest(null, null, null, null)
+				new CreateServiceInstanceRequest(null, null, null, null, true)
 						.withServiceInstanceId("the_id")), "the_copy");
 	}
 

@@ -72,22 +72,16 @@ public class LCServiceInstanceManager {
 		default:
 			assert (false);
 		}
-		//@formatter:off
-		return new ServiceInstance(
-				new CreateServiceInstanceRequest(
-						i.getServiceDefinitionId(), 
-						i.getPlanGuid(), 
-						i.getOrgGuid(),
-						i.getSpaceGuid())
-					.withServiceInstanceId(i.getServiceInstanceId()))
+		// @formatter:off
+		return new ServiceInstance(new CreateServiceInstanceRequest(
+				i.getServiceDefinitionId(), i.getPlanGuid(), i.getOrgGuid(),
+				i.getSpaceGuid(), true).withServiceInstanceId(i
+				.getServiceInstanceId()))
 				.withDashboardUrl(i.getDashboardUrl())
 				.and()
 				.withLastOperation(
-						new ServiceInstanceLastOperation(
-								i.getLastOperationDescription(), 
-								state
-						)
-				);
-		//@formatter:on
+						new ServiceInstanceLastOperation(i
+								.getLastOperationDescription(), state));
+		// @formatter:on
 	}
 }

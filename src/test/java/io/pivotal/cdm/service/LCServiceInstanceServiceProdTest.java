@@ -17,7 +17,6 @@ import io.pivotal.cdm.model.BrokerAction;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -63,7 +62,7 @@ public class LCServiceInstanceServiceProdTest {
 		ServiceDefinition serviceDef = new LCCatalogConfig().catalog()
 				.getServiceDefinitions().get(0);
 		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
-				serviceDef.getId(), PRODUCTION, "org_guid", "space_guid")
+				serviceDef.getId(), PRODUCTION, "org_guid", "space_guid", true)
 				.withServiceInstanceId("service_instance_id").and()
 				.withServiceDefinition(serviceDef).withAsyncClient(true);
 
@@ -120,7 +119,7 @@ public class LCServiceInstanceServiceProdTest {
 	@Test(expected = ServiceInstanceUpdateNotSupportedException.class)
 	public void itShouldThrowForUpdateService() throws Exception {
 		createServiceInstance();
-		service.updateServiceInstance(new UpdateServiceInstanceRequest(COPY)
-				.withInstanceId(instance.getServiceInstanceId()));
+		service.updateServiceInstance(new UpdateServiceInstanceRequest(COPY,
+				true).withInstanceId(instance.getServiceInstanceId()));
 	}
 }

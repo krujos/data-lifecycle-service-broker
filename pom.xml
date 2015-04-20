@@ -22,6 +22,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<start-class>io.pivotal.cdm.CdmServiceBrokerApplication</start-class>
 		<java.version>1.8</java.version>
+		<powermock.version>1.6.2</powermock.version>
 	</properties>
 
 	<dependencies>
@@ -92,7 +93,6 @@
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
-			<version>2.0.0</version>
 		</dependency>
 
 		<dependency>

@@ -24,7 +24,7 @@ public class AWSCopyProvider implements CopyProvider {
 	private final static String description = "CF Service Broker Snapshot Image";
 
 	private HashMap<String, String> instanceImages;
-	
+
 	@Autowired
 	public AWSCopyProvider(final AWSHelper aws, String username,
 			String password, String uri, String sourceInstance) {

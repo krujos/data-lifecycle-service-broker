@@ -4,8 +4,8 @@ import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import io.pivotal.cdm.CdmServiceBrokerApplication;
-
 import net.minidev.json.JSONObject;
+
 import org.apache.http.entity.ContentType;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
@@ -45,15 +44,13 @@ public class SanitizeIntegrationTest {
 	@Test
 	public void itSetsAndGetsTheScript() {
 		JSONObject input = new JSONObject();
-
 		String script = "drop * from table";
 		input.put("script", script);
 		String location = "/api/sanitizescript";
-		given().auth().basic(username, password)
-				.and().content(input.toJSONString())
-				.and().contentType(ContentType.APPLICATION_JSON.toString())
-				.post(location)
-				.then().statusCode(HttpStatus.CREATED.value())
+		given().auth().basic(username, password).and()
+				.content(input.toJSONString()).and()
+				.contentType(ContentType.APPLICATION_JSON.toString())
+				.post(location).then().statusCode(HttpStatus.CREATED.value())
 				.and().header("Location", containsString(location));
 
 		given().auth().basic(username, password).and().get(location).then()
