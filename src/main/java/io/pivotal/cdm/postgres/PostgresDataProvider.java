@@ -1,6 +1,7 @@
 package io.pivotal.cdm.postgres;
 
 import io.pivotal.cdm.provider.DataProvider;
+import io.pivotal.cdm.provider.exception.DataProviderSanitizationFailedException;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -20,14 +21,15 @@ public class PostgresDataProvider implements DataProvider {
 	}
 
 	@Override
-	public void sanitize(String script, Map<String, Object> creds) {
+	public void sanitize(String script, Map<String, Object> creds)
+			throws DataProviderSanitizationFailedException {
 		// We assume that the URI has username, password and db embedded in it.
 		checkForURI(creds);
 
 		try {
 			executor.execute(script, creds);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			throw new DataProviderSanitizationFailedException(e.getMessage());
 		}
 	}
 

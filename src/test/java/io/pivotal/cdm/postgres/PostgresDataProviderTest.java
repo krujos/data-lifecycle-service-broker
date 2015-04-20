@@ -2,25 +2,22 @@ package io.pivotal.cdm.postgres;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import io.pivotal.cdm.provider.exception.DataProviderSanitizationFailedException;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 public class PostgresDataProviderTest {
-
-	@InjectMocks
-	DriverManager driveManager;
 
 	PostgresDataProvider dataProvider;
 
@@ -30,6 +27,8 @@ public class PostgresDataProviderTest {
 	@Mock
 	PostgresScriptExecutor executor;
 
+	String script = "This is the script;";
+
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
@@ -38,7 +37,8 @@ public class PostgresDataProviderTest {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void itShouldThrowIllegalArgumentForMissingUri() {
+	public void itShouldThrowIllegalArgumentForMissingUri()
+			throws DataProviderSanitizationFailedException {
 		Map<String, Object> creds = new HashMap<>();
 		creds.put("username", "username");
 		creds.put("password", "password");
@@ -47,14 +47,25 @@ public class PostgresDataProviderTest {
 	}
 
 	@Test
-	public void itShouldExecuteTheScript() throws SQLException {
+	public void itShouldExecuteTheScript() throws SQLException,
+			DataProviderSanitizationFailedException {
 		Map<String, Object> creds = new HashMap<>();
 		creds.put("username", "username");
 		creds.put("password", "password");
 		creds.put("uri", "fake_uri");
-		String script = "This is the script;";
 		dataProvider.sanitize(script, creds);
 		verify(executor, times(1)).execute(anyString(), any());
+	}
 
+	@Test(expected = DataProviderSanitizationFailedException.class)
+	public void itShouldThrowASanitizeFailedExceptionIfTheScriptBarfs()
+			throws Exception {
+		doThrow(new SQLException("Broken")).when(executor)
+				.execute(any(), any());
+		Map<String, Object> creds = new HashMap<>();
+		creds.put("username", "username");
+		creds.put("password", "password");
+		creds.put("uri", "fake_uri");
+		dataProvider.sanitize(script, creds);
 	}
 }
