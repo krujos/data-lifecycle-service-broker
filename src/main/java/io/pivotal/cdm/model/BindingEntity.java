@@ -36,7 +36,7 @@ public class BindingEntity {
 		return appGuid;
 	}
 
-	public void setAppGuid(String appGuid) {
+	private void setAppGuid(String appGuid) {
 		this.appGuid = appGuid;
 	}
 
@@ -44,7 +44,7 @@ public class BindingEntity {
 		return bindingId;
 	}
 
-	public void setBindingId(String bindingId) {
+	private void setBindingId(String bindingId) {
 		this.bindingId = bindingId;
 	}
 
@@ -52,7 +52,7 @@ public class BindingEntity {
 		return serviceInstanceId;
 	}
 
-	public void setServiceInstanceId(String serviceInstanceId) {
+	private void setServiceInstanceId(String serviceInstanceId) {
 		this.serviceInstanceId = serviceInstanceId;
 	}
 
@@ -60,7 +60,7 @@ public class BindingEntity {
 		return drainUrl;
 	}
 
-	public void setDrainUrl(String drainUrl) {
+	private void setDrainUrl(String drainUrl) {
 		this.drainUrl = drainUrl;
 	}
 
@@ -68,7 +68,7 @@ public class BindingEntity {
 		return id;
 	}
 
-	public void setId(String id) {
+	private void setId(String id) {
 		this.id = id;
 	}
 }

@@ -1,8 +1,6 @@
 package io.pivotal.cdm.model;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 @Entity
@@ -11,7 +9,7 @@ public class SanitizationScript {
 	public final static long ID = 1;
 
 	@Id
-	long id = ID;
+	private long id = ID;
 
 	private String script;
 
@@ -26,7 +24,7 @@ public class SanitizationScript {
 		return script;
 	}
 
-	public void setScript(String script) {
+	private void setScript(String script) {
 		this.script = script;
 	}
 

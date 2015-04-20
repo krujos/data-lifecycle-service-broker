@@ -29,14 +29,14 @@ public class AWSCopyProviderTest {
 	@Mock
 	private AmazonEC2Client ec2Client;
 
-	private String pgUser = "pgUser";
-	private String pgPass = "pgPass";
 	private String pgURI = "postgres://pgUser:pgPass@10.10.10.10:5432/testdb";
 
 	@Before
 	public void setUp() throws ServiceBrokerException, TimeoutException {
 		MockitoAnnotations.initMocks(this);
 		// TODO, need to get the aws helper in there.
+		String pgUser = "pgUser";
+		String pgPass = "pgPass";
 		provider = new AWSCopyProvider(aws, pgUser, pgPass, pgURI,
 				"sourceInstance");
 		// TODO remove the description.......
@@ -49,11 +49,6 @@ public class AWSCopyProviderTest {
 
 		assertThat("test_instance",
 				is(equalTo(provider.createCopy("sourceInstance"))));
-	}
-
-	@Test
-	public void itShouldCreateAnAMIAndStartAnEC2InstanceForACopy() {
-		// / err... it's all done in before...
 	}
 
 	@Test

@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class LCServiceInstanceBindingManager {
 
 	@Autowired
-	BindingRepository repo;
+	private BindingRepository repo;
 
 	public LCServiceInstanceBindingManager(BindingRepository repo) {
 		this.repo = repo;

@@ -31,10 +31,10 @@ public class ServiceInstanceBindingManagerTest {
 	private LCServiceInstanceBindingManager bindingManager;
 
 	private Map<String, Object> creds = new HashMap<String, Object>();
-	ServiceInstanceBinding binding = new ServiceInstanceBinding("binding-id",
+	private ServiceInstanceBinding binding = new ServiceInstanceBinding("binding-id",
 			"service-instance-id", creds, "syslog-drain", "app-guid");
 
-	BindingEntity bindingEntity = new BindingEntity(binding);
+	private BindingEntity bindingEntity = new BindingEntity(binding);
 
 	@Before
 	public void setUp() {

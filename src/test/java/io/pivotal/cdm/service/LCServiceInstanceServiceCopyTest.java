@@ -18,10 +18,7 @@ import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -77,11 +74,10 @@ public class LCServiceInstanceServiceCopyTest {
 	}
 
 	private CreateServiceInstanceRequest newCreateServiceInstanceRequest() {
-		CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+		return new CreateServiceInstanceRequest(
 				serviceDef.getId(), COPY, "org_guid", "space_guid")
 				.withServiceInstanceId("service_instance_id").and()
 				.withServiceDefinition(serviceDef).withAsyncClient(true);
-		return createServiceInstanceRequest;
 	}
 
 	@Test
@@ -119,9 +115,9 @@ public class LCServiceInstanceServiceCopyTest {
 	public void itReturnsTheCopyInstanceIdForServiceInstanceId()
 			throws Exception {
 		createServiceInstance();
-		Collection<Pair<String, ServiceInstance>> instances = Arrays
-				.asList(new ImmutablePair<String, ServiceInstance>(
-						"copy_instance", instance));
+		Collection<Pair<String, ServiceInstance>> instances =
+				Collections.singletonList(new ImmutablePair<String, ServiceInstance>(
+					"copy_instance", instance));
 		when(instanceManager.getInstances()).thenReturn(instances);
 		assertThat(service.getInstanceIdForServiceInstance(instance
 				.getServiceInstanceId()), is(equalTo("copy_instance")));

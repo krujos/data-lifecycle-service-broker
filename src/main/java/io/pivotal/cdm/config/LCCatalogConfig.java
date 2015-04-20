@@ -1,10 +1,6 @@
 package io.pivotal.cdm.config;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.cloudfoundry.community.servicebroker.model.Catalog;
 import org.cloudfoundry.community.servicebroker.model.Plan;
@@ -15,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class LCCatalogConfig {
 
-	ServiceDefinition postgresServiceDefinition;
+	private ServiceDefinition postgresServiceDefinition;
 
 	public static String PRODUCTION = "prod";
 	public static String COPY = "copy";
@@ -41,6 +37,6 @@ public class LCCatalogConfig {
 
 	@Bean
 	public Catalog catalog() {
-		return new Catalog(Arrays.asList(postgresServiceDefinition));
+		return new Catalog(Collections.singletonList(postgresServiceDefinition));
 	}
 }

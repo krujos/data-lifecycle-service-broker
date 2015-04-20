@@ -11,9 +11,6 @@ import static org.mockito.Mockito.when;
 import io.pivotal.cdm.model.SanitizationScript;
 import io.pivotal.cdm.repo.ScriptRepo;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -25,7 +22,7 @@ public class DataProviderServiceTest {
 	@Mock
 	ScriptRepo scriptRepo;
 
-	DataProviderService service;
+	private DataProviderService service;
 
 	@Before
 	public void setUp() {

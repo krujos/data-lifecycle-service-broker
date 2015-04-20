@@ -63,9 +63,8 @@ public class BrokerIntegrationTest {
 	public void setUp() {
 		RestAssured.port = port;
 
-		RequestSpecification requestSpecification = new RequestSpecBuilder()
+		RestAssured.requestSpecification = new RequestSpecBuilder()
 				.addHeader("X-Broker-Api-Version", "2.4").build();
-		RestAssured.requestSpecification = requestSpecification;
 
 		bindingRepo.deleteAll();
 	}

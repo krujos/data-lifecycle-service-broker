@@ -21,7 +21,6 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.builder.RequestSpecBuilder;
-import com.jayway.restassured.specification.RequestSpecification;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = CdmServiceBrokerApplication.class)
@@ -42,9 +41,8 @@ public class CatalogIntegrationTest {
 	@Before
 	public void setUp() {
 		RestAssured.port = port;
-		RequestSpecification requestSpecification = new RequestSpecBuilder()
+		RestAssured.requestSpecification = new RequestSpecBuilder()
 				.addHeader("X-Broker-Api-Version", "2.4").build();
-		RestAssured.requestSpecification = requestSpecification;
 	}
 
 	@Test

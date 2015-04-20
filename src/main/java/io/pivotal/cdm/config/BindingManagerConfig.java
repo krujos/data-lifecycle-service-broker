@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class BindingManagerConfig {
+class BindingManagerConfig {
 
 	@Autowired
 	private BindingRepository repo;

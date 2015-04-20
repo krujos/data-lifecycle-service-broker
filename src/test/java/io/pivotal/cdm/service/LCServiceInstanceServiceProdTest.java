@@ -18,6 +18,7 @@ import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
@@ -97,7 +98,7 @@ public class LCServiceInstanceServiceProdTest {
 		ImmutablePair<String, ServiceInstance> immutablePair = new ImmutablePair<String, ServiceInstance>(
 				"source_instance_id", instance);
 		when(instanceManager.getInstances()).thenReturn(
-				Arrays.asList(immutablePair));
+				Collections.singletonList(immutablePair));
 		assertThat(service.getInstanceIdForServiceInstance(instance
 				.getServiceInstanceId()), is(equalTo("source_instance_id")));
 	}
