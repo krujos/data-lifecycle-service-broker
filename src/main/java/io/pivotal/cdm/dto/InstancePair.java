@@ -24,10 +24,7 @@ public class InstancePair {
 
 	@Override
 	public boolean equals(Object lhs) {
-		if (lhs instanceof InstancePair) {
-			return this.hashCode() == lhs.hashCode();
-		}
-		return false;
+		return lhs instanceof InstancePair && this.hashCode() == lhs.hashCode();
 	}
 
 	@Override
