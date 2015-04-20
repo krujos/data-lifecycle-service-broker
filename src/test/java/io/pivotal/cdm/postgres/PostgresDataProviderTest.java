@@ -1,7 +1,12 @@
 package io.pivotal.cdm.postgres;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,8 +26,8 @@ public class PostgresDataProviderTest {
 	@Mock
 	Connection connection;
 
-	// @Mock
-	// ScriptUtils scriptUtils;
+	@InjectMocks
+	PostgresScriptExecutor executor;
 
 	@Before
 	public void setUp() {
@@ -39,19 +44,11 @@ public class PostgresDataProviderTest {
 		dataProvider.sanitize("", creds);
 	}
 
-	// @Test
-	// public void itShouldExecuteTheScript() {
-	//
-	// String script = "This is the script;";
-	//
-	// verify(scriptUtils, times(1)).executeSqlScript(connection,
-	// argThat(new ArgumentMatcher<ByteArrayResource>() {
-	// @Override
-	// public boolean matches(Object argument) {
-	// String s = new String((byte[]) argument);
-	// return s.equals(script);
-	// }
-	// }));
-	//
-	// }
+	@Test
+	public void itShouldExecuteTheScript() throws SQLException {
+
+		String script = "This is the script;";
+		verify(executor, times(1)).execute(script, any());
+
+	}
 }

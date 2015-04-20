@@ -47,7 +47,7 @@ public class LCServiceInstanceBindingServiceCopyTest {
 
 	private ServiceInstance serviceInstance = new ServiceInstance(
 			new CreateServiceInstanceRequest("test_service_def_id", COPY,
-					"org", "space")
+					"org", "space", false)
 					.withServiceInstanceId("test_service_instance_id"));
 
 	private ServiceInstanceBinding bindResult;

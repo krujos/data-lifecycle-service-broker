@@ -141,7 +141,7 @@ public class LCServiceInstanceManagerTest {
 	 */
 	private ServiceInstanceEntity makeSIEntity() {
 		return new ServiceInstanceEntity(new ServiceInstance(
-				new CreateServiceInstanceRequest(null, null, null, null)
+				new CreateServiceInstanceRequest(null, null, null, null, true)
 						.withServiceInstanceId("the_id")), "the_copy");
 	}
 

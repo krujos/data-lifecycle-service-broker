@@ -18,7 +18,10 @@ import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -74,8 +77,8 @@ public class LCServiceInstanceServiceCopyTest {
 	}
 
 	private CreateServiceInstanceRequest newCreateServiceInstanceRequest() {
-		return new CreateServiceInstanceRequest(
-				serviceDef.getId(), COPY, "org_guid", "space_guid")
+		return new CreateServiceInstanceRequest(serviceDef.getId(), COPY,
+				"org_guid", "space_guid")
 				.withServiceInstanceId("service_instance_id").and()
 				.withServiceDefinition(serviceDef).withAsyncClient(true);
 	}
@@ -115,9 +118,9 @@ public class LCServiceInstanceServiceCopyTest {
 	public void itReturnsTheCopyInstanceIdForServiceInstanceId()
 			throws Exception {
 		createServiceInstance();
-		Collection<Pair<String, ServiceInstance>> instances =
-				Collections.singletonList(new ImmutablePair<String, ServiceInstance>(
-					"copy_instance", instance));
+		Collection<Pair<String, ServiceInstance>> instances = Collections
+				.singletonList(new ImmutablePair<String, ServiceInstance>(
+						"copy_instance", instance));
 		when(instanceManager.getInstances()).thenReturn(instances);
 		assertThat(service.getInstanceIdForServiceInstance(instance
 				.getServiceInstanceId()), is(equalTo("copy_instance")));
@@ -155,7 +158,7 @@ public class LCServiceInstanceServiceCopyTest {
 	public void itShouldThrowIfInstanceAlreadyExists() throws Exception {
 		when(instanceManager.getInstance(any())).thenReturn(
 				new ServiceInstance(new CreateServiceInstanceRequest(null,
-						null, null, null)));
+						null, null, null, true)));
 		createServiceInstance();
 	}
 
