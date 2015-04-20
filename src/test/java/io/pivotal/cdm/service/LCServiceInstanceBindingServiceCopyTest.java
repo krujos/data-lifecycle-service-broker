@@ -38,7 +38,6 @@ import org.mockito.MockitoAnnotations;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 
-@SuppressWarnings("StringConcatenationMissingWhitespace")
 public class LCServiceInstanceBindingServiceCopyTest {
 
 	@Mock

@@ -1,6 +1,5 @@
 package io.pivotal.cdm.aws;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -72,7 +71,8 @@ public class AWSHelper {
 	/**
 	 * Given an AMI start an EC2 Instance.
 	 * 
-	 * @param amiId to start
+	 * @param amiId
+	 *            to start
 	 * @return the id of the running instance.
 	 */
 	public String startEC2Instance(String amiId) {
