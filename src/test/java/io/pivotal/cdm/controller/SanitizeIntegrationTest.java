@@ -37,10 +37,6 @@ public class SanitizeIntegrationTest {
 	@Value("#{environment.SECURITY_USER_PASSWORD}")
 	private String password;
 
-	private String script = "drop * from table";
-
-	private String location = "/api/sanitizescript";
-
 	@Before
 	public void setUp() {
 		RestAssured.port = port;
@@ -49,7 +45,9 @@ public class SanitizeIntegrationTest {
 	@Test
 	public void itSetsAndGetsTheScript() {
 		JSONObject input = new JSONObject();
+		String script = "drop * from table";
 		input.put("script", script);
+		String location = "/api/sanitizescript";
 		given().auth().basic(username, password)
 				.and().content(input.toJSONString())
 				.and().contentType(ContentType.APPLICATION_JSON.toString())

@@ -41,8 +41,6 @@ public class LCServiceInstanceBindingServiceProdTest {
 	private ServiceInstance serviceInstance = new ServiceInstance(
 			createServiceInstanceRequest);
 
-	private String serviceId = "postgrescmd";
-
 	@Mock
 	CopyProvider provider;
 
@@ -87,6 +85,7 @@ public class LCServiceInstanceBindingServiceProdTest {
 	@Test
 	public void itShouldNotInteractWithProviderForTheProductionCopyDuringUnbind()
 			throws ServiceBrokerException {
+		String serviceId = "postgrescmd";
 		bindingService
 				.deleteServiceInstanceBinding(new DeleteServiceInstanceBindingRequest(
 						bindingId, serviceInstance, serviceId, PRODUCTION));
