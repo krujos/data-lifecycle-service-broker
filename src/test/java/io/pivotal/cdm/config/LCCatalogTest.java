@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class LCCatalogTest {
 
-	Catalog pgCat;
+	private Catalog pgCat;
 
 	@Before
 	public void setUp() {

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
@@ -48,8 +49,7 @@ public class AWSHelperTest {
 	private Instance instance = new Instance().withInstanceId("test_instance");
 
 	private RunInstancesResult runInstanceResult = new RunInstancesResult()
-			.withReservation(new Reservation().withInstances(Arrays
-					.asList(instance)));
+			.withReservation(new Reservation().withInstances(Collections.singletonList(instance)));
 
 	@Before
 	public void setUp() {
@@ -87,8 +87,7 @@ public class AWSHelperTest {
 	// TODO this should not throw a service broker exception.
 	@Test(expected = TimeoutException.class)
 	public void itShouldFailWhenImageStateIsFailed()
-			throws ServiceInstanceBindingExistsException,
-			ServiceBrokerException, TimeoutException {
+			throws TimeoutException {
 		when(ec2Client.createImage(any())).thenReturn(
 				new CreateImageResult().withImageId("test_image"));
 
@@ -146,7 +145,7 @@ public class AWSHelperTest {
 		};
 
 		DescribeVolumesResult volumesResult = new DescribeVolumesResult()
-				.withVolumes(Arrays.asList(new Volume()
+				.withVolumes(Collections.singletonList(new Volume()
 						.withVolumeId("test_volume")));
 
 		when(ec2Client.describeVolumes(awsRqst(pred)))

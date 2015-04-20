@@ -22,7 +22,7 @@ public class DataProviderServiceTest {
 	@Mock
 	ScriptRepo scriptRepo;
 
-	DataProviderService service;
+	private DataProviderService service;
 
 	@Before
 	public void setUp() {

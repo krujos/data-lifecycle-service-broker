@@ -19,7 +19,7 @@ import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 
 @RestController
-public class StatusController {
+class StatusController {
 
 	@Autowired
 	private LCServiceInstanceService instanceService;

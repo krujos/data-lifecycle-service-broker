@@ -6,7 +6,7 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 
 @Configuration
-public class TaskExecutorConfig {
+class TaskExecutorConfig {
 
 	@Bean
 	public TaskExecutor newTaskExecutor() {

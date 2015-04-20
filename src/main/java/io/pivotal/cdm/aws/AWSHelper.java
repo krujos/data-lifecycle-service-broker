@@ -1,6 +1,7 @@
 package io.pivotal.cdm.aws;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
@@ -40,12 +41,6 @@ public class AWSHelper {
 
 	private String sourceInstanceId;
 
-	/**
-	 * Create a new pattern interface to AWS.
-	 * 
-	 * @param ec2Client
-	 * @param subnetId
-	 */
 	@Autowired
 	public AWSHelper(AmazonEC2Client ec2Client, String subnetId,
 			String sourceInstanceId) {
@@ -71,13 +66,13 @@ public class AWSHelper {
 	public void terminateEc2Instance(String ec2Instance) {
 		log.info("Terminating instance " + ec2Instance);
 		ec2Client.terminateInstances(new TerminateInstancesRequest()
-				.withInstanceIds(Arrays.asList(ec2Instance)));
+				.withInstanceIds(Collections.singletonList(ec2Instance)));
 	}
 
 	/**
 	 * Given an AMI start an EC2 Instance.
 	 * 
-	 * @param amiId
+	 * @param amiId to start
 	 * @return the id of the running instance.
 	 */
 	public String startEC2Instance(String amiId) {

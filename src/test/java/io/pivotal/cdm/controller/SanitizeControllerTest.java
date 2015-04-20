@@ -26,11 +26,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 public class SanitizeControllerTest {
 
-	MockMvc mockMvc;
+	private MockMvc mockMvc;
 
-	String script = "drop * from table";
+	private String script = "drop * from table";
 
-	String location = "/api/sanitizescript";
+	private String location = "/api/sanitizescript";
 
 	@InjectMocks
 	SanitizeController sanitizeController;

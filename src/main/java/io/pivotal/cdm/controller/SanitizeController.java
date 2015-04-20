@@ -17,7 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.Map;
 
 @RestController
-public class SanitizeController {
+class SanitizeController {
 
 	@Autowired
 	private DataProviderService dataService;

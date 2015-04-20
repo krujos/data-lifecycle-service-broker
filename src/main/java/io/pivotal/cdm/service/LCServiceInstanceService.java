@@ -42,7 +42,7 @@ import org.springframework.stereotype.Service;
 public class LCServiceInstanceService implements ServiceInstanceService {
 	private Logger logger = Logger.getLogger(LCServiceInstanceService.class);
 
-	LCServiceInstanceManager instanceManager;
+	private LCServiceInstanceManager instanceManager;
 
 	private CopyProvider provider;
 

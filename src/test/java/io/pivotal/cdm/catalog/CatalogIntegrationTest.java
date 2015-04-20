@@ -21,7 +21,6 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.builder.RequestSpecBuilder;
-import com.jayway.restassured.specification.RequestSpecification;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = CdmServiceBrokerApplication.class)

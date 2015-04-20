@@ -51,7 +51,7 @@ public class ServiceInstanceEntity {
 		return copyId;
 	}
 
-	public void setCopyId(String copyId) {
+	private void setCopyId(String copyId) {
 		this.copyId = copyId;
 	}
 
@@ -59,7 +59,7 @@ public class ServiceInstanceEntity {
 		return spaceGuid;
 	}
 
-	public void setSpaceGuid(String spaceGuid) {
+	private void setSpaceGuid(String spaceGuid) {
 		this.spaceGuid = spaceGuid;
 	}
 
@@ -67,7 +67,7 @@ public class ServiceInstanceEntity {
 		return serviceInstanceId;
 	}
 
-	public void setServiceInstanceId(String serviceInstanceId) {
+	private void setServiceInstanceId(String serviceInstanceId) {
 		this.serviceInstanceId = serviceInstanceId;
 	}
 
@@ -75,7 +75,7 @@ public class ServiceInstanceEntity {
 		return planGuid;
 	}
 
-	public void setPlanGuid(String planGuid) {
+	private void setPlanGuid(String planGuid) {
 		this.planGuid = planGuid;
 	}
 
@@ -83,7 +83,7 @@ public class ServiceInstanceEntity {
 		return orgGuid;
 	}
 
-	public void setOrgGuid(String orgGuid) {
+	private void setOrgGuid(String orgGuid) {
 		this.orgGuid = orgGuid;
 	}
 
@@ -91,7 +91,7 @@ public class ServiceInstanceEntity {
 		return dashboardUrl;
 	}
 
-	public void setDashboardUrl(String dashboardUrl) {
+	private void setDashboardUrl(String dashboardUrl) {
 		this.dashboardUrl = dashboardUrl;
 	}
 
@@ -99,7 +99,7 @@ public class ServiceInstanceEntity {
 		return serviceDefinitionId;
 	}
 
-	public void setServiceDefinitionId(String serviceDefinitionId) {
+	private void setServiceDefinitionId(String serviceDefinitionId) {
 		this.serviceDefinitionId = serviceDefinitionId;
 	}
 
@@ -107,7 +107,7 @@ public class ServiceInstanceEntity {
 		return id;
 	}
 
-	public void setId(String id) {
+	private void setId(String id) {
 		this.id = id;
 	}
 
@@ -115,7 +115,7 @@ public class ServiceInstanceEntity {
 		return lastOperationState;
 	}
 
-	public void setLastOperationState(String lastOperationState) {
+	private void setLastOperationState(String lastOperationState) {
 		this.lastOperationState = lastOperationState;
 	}
 
@@ -123,7 +123,7 @@ public class ServiceInstanceEntity {
 		return lastOperationDescription;
 	}
 
-	public void setLastOperationDescription(String lastOperationDescription) {
+	private void setLastOperationDescription(String lastOperationDescription) {
 		this.lastOperationDescription = lastOperationDescription;
 	}
 

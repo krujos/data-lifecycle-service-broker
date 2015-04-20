@@ -8,9 +8,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class LCServiceInstanceManagerConfig {
+class LCServiceInstanceManagerConfig {
 
 	@Autowired
+	private
 	ServiceInstanceRepo repo;
 
 	@Bean

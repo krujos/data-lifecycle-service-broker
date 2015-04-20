@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class DataProviderService {
 
-	ScriptRepo scriptRepo;
+	private ScriptRepo scriptRepo;
 
 	@Autowired
 	public DataProviderService(ScriptRepo scriptRepo) {

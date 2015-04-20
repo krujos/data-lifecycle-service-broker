@@ -25,23 +25,15 @@ public class AWSCopyProvider implements CopyProvider {
 
 	private HashMap<String, String> instanceImages;
 
-	/**
-	 *
-	 * @param aws
-	 * @param username
-	 * @param password
-	 * @param uri
-	 * @param sourceInstance
-	 */
 	@Autowired
 	public AWSCopyProvider(final AWSHelper aws, String username,
 			String password, String uri, String sourceInstance) {
 		this.aws = aws;
-		creds = new HashMap<String, Object>();
+		creds = new HashMap<>();
 		creds.put("username", username);
 		creds.put("password", password);
 		creds.put("uri", uri);
-		instanceImages = new HashMap<String, String>();
+		instanceImages = new HashMap<>();
 		instanceImages.put(sourceInstance, PRODUCTION);
 	}
 
@@ -74,7 +66,7 @@ public class AWSCopyProvider implements CopyProvider {
 		if (!instanceImages.containsKey(instance)) {
 			return null;
 		}
-		Map<String, Object> newCreds = new HashMap<String, Object>(creds);
+		Map<String, Object> newCreds = new HashMap<>(creds);
 
 		String instanceIp = aws.getEC2InstanceIp(instance);
 		String pgURI = (String) creds.get("uri");

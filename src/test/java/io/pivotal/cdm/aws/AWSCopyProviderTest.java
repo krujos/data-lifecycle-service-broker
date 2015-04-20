@@ -52,11 +52,6 @@ public class AWSCopyProviderTest {
 	}
 
 	@Test
-	public void itShouldCreateAnAMIAndStartAnEC2InstanceForACopy() {
-		// / err... it's all done in before...
-	}
-
-	@Test
 	public void itShouldReturnTheProductionInstanceCredentials()
 			throws ServiceBrokerException {
 		when(aws.getEC2InstanceIp("sourceInstance")).thenReturn("10.10.10.10");

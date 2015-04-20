@@ -35,7 +35,7 @@ public class LCServiceInstanceBindingServiceProdTest {
 
 	private LCServiceInstanceBindingService bindingService;
 
-	CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+	private CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
 			"test_service", PRODUCTION, "org", "space")
 			.withServiceInstanceId("test_service_id");
 	private ServiceInstance serviceInstance = new ServiceInstance(
