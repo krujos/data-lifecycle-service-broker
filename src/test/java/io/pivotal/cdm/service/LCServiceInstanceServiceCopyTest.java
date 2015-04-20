@@ -78,7 +78,7 @@ public class LCServiceInstanceServiceCopyTest {
 
 	private CreateServiceInstanceRequest newCreateServiceInstanceRequest() {
 		return new CreateServiceInstanceRequest(serviceDef.getId(), COPY,
-				"org_guid", "space_guid")
+				"org_guid", "space_guid", true)
 				.withServiceInstanceId("service_instance_id").and()
 				.withServiceDefinition(serviceDef).withAsyncClient(true);
 	}
@@ -166,7 +166,8 @@ public class LCServiceInstanceServiceCopyTest {
 	public void itShouldThrowForUpdateService() throws Exception {
 		createServiceInstance();
 		service.updateServiceInstance(new UpdateServiceInstanceRequest(
-				PRODUCTION).withInstanceId(instance.getServiceInstanceId()));
+				PRODUCTION, true).withInstanceId(instance
+				.getServiceInstanceId()));
 
 	}
 
