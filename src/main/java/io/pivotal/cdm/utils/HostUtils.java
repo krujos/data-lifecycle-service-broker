@@ -20,7 +20,7 @@ public class HostUtils {
 			int port = uri.getPort();
 			String host = uri.getHost();
 			logger.info("Waiting for " + host + " to boot.");
-			for (int i = 6; i > 0; --i) {
+			for (int i = 8; i > 0; --i) {
 				try {
 					try {
 						Thread.sleep(20000);
