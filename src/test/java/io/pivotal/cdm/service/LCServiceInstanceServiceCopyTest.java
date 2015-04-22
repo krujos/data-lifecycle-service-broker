@@ -16,7 +16,9 @@ import static org.mockito.Mockito.when;
 import io.pivotal.cdm.config.LCCatalogConfig;
 import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.provider.DataProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
+import io.pivotal.cdm.utils.HostUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,7 +49,10 @@ public class LCServiceInstanceServiceCopyTest {
 	private ServiceInstance instance;
 
 	@Mock
-	private CopyProvider provider;
+	private CopyProvider copyProvider;
+
+	@Mock
+	private DataProvider dataProvider;
 
 	@Mock
 	private BrokerActionRepository brokerRepo;
@@ -58,18 +63,25 @@ public class LCServiceInstanceServiceCopyTest {
 	@Mock
 	LCServiceInstanceManager instanceManager;
 
+	@Mock
+	private DataProviderService dataProviderService;
+
+	@Mock
+	private HostUtils hostUtils;
+
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
-		service = new LCServiceInstanceService(provider, "source_instance_id",
-				brokerRepo, instanceManager, new SyncTaskExecutor());
+		service = new LCServiceInstanceService(copyProvider, dataProvider,
+				"source_instance_id", brokerRepo, instanceManager,
+				new SyncTaskExecutor(), dataProviderService, hostUtils);
 
 	}
 
 	private void createServiceInstance() throws ServiceInstanceExistsException,
 			ServiceBrokerException, ServiceBrokerAsyncRequiredException {
-		when(provider.createCopy("source_instance_id")).thenReturn(
+		when(copyProvider.createCopy("source_instance_id")).thenReturn(
 				"copy_instance");
 		CreateServiceInstanceRequest createServiceInstanceRequest = newCreateServiceInstanceRequest();
 
@@ -87,7 +99,10 @@ public class LCServiceInstanceServiceCopyTest {
 	public void itShouldStoreWhatItCreates()
 			throws ServiceInstanceExistsException, ServiceBrokerException,
 			ServiceBrokerAsyncRequiredException {
+		when(hostUtils.waitForBoot(any())).thenReturn(true);
 		createServiceInstance();
+		assertThat(instance.getServiceInstanceLastOperation().getState(),
+				is(equalTo("succeeded")));
 		verify(instanceManager).saveInstance(instance, "copy_instance");
 	}
 
@@ -95,7 +110,14 @@ public class LCServiceInstanceServiceCopyTest {
 	public void itShouldCreateACopyWhenProvisionedWithACopyPlan()
 			throws Exception {
 		createServiceInstance();
-		verify(provider).createCopy("source_instance_id");
+		verify(copyProvider).createCopy("source_instance_id");
+	}
+
+	@Test
+	public void itShouldSanitizeACopy() throws Exception {
+		when(hostUtils.waitForBoot(any())).thenReturn(true);
+		createServiceInstance();
+		verify(dataProvider).sanitize(anyString(), any());
 	}
 
 	@Test
@@ -110,7 +132,7 @@ public class LCServiceInstanceServiceCopyTest {
 				service.deleteServiceInstance(new DeleteServiceInstanceRequest(
 						id, instance.getServiceDefinitionId(), instance
 								.getPlanId(), true)), is(equalTo(instance)));
-		verify(provider).deleteCopy("copy_instance");
+		verify(copyProvider).deleteCopy("copy_instance");
 		verify(instanceManager).removeInstance(instance.getServiceInstanceId());
 	}
 
@@ -190,7 +212,7 @@ public class LCServiceInstanceServiceCopyTest {
 		ServiceInstance theInstance = new ServiceInstance(
 				newCreateServiceInstanceRequest());
 
-		doThrow(new ServiceBrokerException("Problem!")).when(provider)
+		doThrow(new ServiceBrokerException("Problem!")).when(copyProvider)
 				.deleteCopy(anyString());
 
 		when(instanceManager.getInstance(anyString())).thenReturn(theInstance);

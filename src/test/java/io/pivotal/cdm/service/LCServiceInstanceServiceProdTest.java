@@ -15,7 +15,9 @@ import static org.mockito.Mockito.when;
 import io.pivotal.cdm.config.LCCatalogConfig;
 import io.pivotal.cdm.model.BrokerAction;
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.provider.DataProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
+import io.pivotal.cdm.utils.HostUtils;
 
 import java.util.Collections;
 
@@ -40,7 +42,10 @@ public class LCServiceInstanceServiceProdTest {
 	private ServiceInstance instance;
 
 	@Mock
-	CopyProvider provider;
+	CopyProvider copyProvider;
+
+	@Mock
+	DataProvider dataProvider;
 
 	@Mock
 	BrokerActionRepository brokerRepo;
@@ -48,13 +53,20 @@ public class LCServiceInstanceServiceProdTest {
 	@Mock
 	LCServiceInstanceManager instanceManager;
 
+	@Mock
+	private DataProviderService dataProviderService;
+
+	@Mock
+	private HostUtils hostUtils;
+
 	// TODO DRY w/ copy test
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
-		service = new LCServiceInstanceService(provider, "source_instance_id",
-				brokerRepo, instanceManager, new SyncTaskExecutor());
+		service = new LCServiceInstanceService(copyProvider, dataProvider,
+				"source_instance_id", brokerRepo, instanceManager,
+				new SyncTaskExecutor(), dataProviderService, hostUtils);
 
 	}
 
@@ -67,13 +79,13 @@ public class LCServiceInstanceServiceProdTest {
 				.withServiceDefinition(serviceDef).withAsyncClient(true);
 
 		instance = service.createServiceInstance(createServiceInstanceRequest);
-		verify(provider, never()).createCopy(any());
+		verify(copyProvider, never()).createCopy(any());
 	}
 
 	@Test
 	public void itShouldNotCreateACopyForProd() throws Exception {
 		createServiceInstance();
-		verifyZeroInteractions(provider);
+		verifyZeroInteractions(copyProvider);
 	}
 
 	@Test
@@ -87,7 +99,7 @@ public class LCServiceInstanceServiceProdTest {
 		assertNotNull(service
 				.deleteServiceInstance(new DeleteServiceInstanceRequest(id,
 						"serviceId", PRODUCTION, true)));
-		verifyZeroInteractions(provider);
+		verifyZeroInteractions(copyProvider);
 	}
 
 	@Test

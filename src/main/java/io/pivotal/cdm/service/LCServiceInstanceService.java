@@ -8,9 +8,13 @@ import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.model.BrokerAction;
 import io.pivotal.cdm.model.BrokerActionState;
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.provider.DataProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
+import io.pivotal.cdm.utils.HostUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -44,7 +48,7 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 
 	private LCServiceInstanceManager instanceManager;
 
-	private CopyProvider provider;
+	private CopyProvider copyProvider;
 
 	private String sourceInstanceId;
 
@@ -52,18 +56,30 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 
 	private TaskExecutor executor;
 
+	private DataProvider dataProvider;
+
+	private DataProviderService dataProviderService;
+
+	private HostUtils hostUtils;
+
 	@Autowired
 	public LCServiceInstanceService(
-			final CopyProvider provider,
+			final CopyProvider copyProvider,
+			final DataProvider dataProvider,
 			@Value("#{environment.SOURCE_INSTANCE_ID}") final String sourceInstanceId,
 			final BrokerActionRepository brokerRepo,
 			final LCServiceInstanceManager instanceManager,
-			final TaskExecutor executor) {
-		this.provider = provider;
+			final TaskExecutor executor,
+			final DataProviderService dataProviderService,
+			final HostUtils hostUtils) {
+		this.copyProvider = copyProvider;
+		this.dataProvider = dataProvider;
 		this.sourceInstanceId = sourceInstanceId;
 		this.brokerRepo = brokerRepo;
 		this.instanceManager = instanceManager;
 		this.executor = executor;
+		this.dataProviderService = dataProviderService;
+		this.hostUtils = hostUtils;
 	}
 
 	@Override
@@ -77,9 +93,12 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 		throwIfDuplicate(id);
 		throwIfSync(request);
 
-		ServiceInstance instance = new ServiceInstance(request).isAsync(true);
-		instanceManager.saveInstance(instance, null);
+		ServiceInstance instance = new ServiceInstance(request).isAsync(true)
+				.withLastOperation(
+						new ServiceInstanceLastOperation("Creating instance",
+								OperationState.IN_PROGRESS));
 
+		instanceManager.saveInstance(instance, null);
 		provision(request, id, instance);
 		return instance;
 
@@ -118,7 +137,7 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 			public void run() {
 				try {
 					if (COPY.equals(request.getPlanId())) {
-						provider.deleteCopy(instanceManager
+						copyProvider.deleteCopy(instanceManager
 								.getCopyIdForInstance(id));
 					}
 					log(id, "Deleted service instance", COMPLETE);
@@ -154,22 +173,21 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 	}
 
 	public String getInstanceIdForServiceInstance(String serviceInstanceId) {
-		//@formatter:off
-		return instanceManager.getInstances()
+		// @formatter:off
+		return instanceManager
+				.getInstances()
 				.stream()
-				.filter(s -> s.getRight().getServiceInstanceId().equals(serviceInstanceId))
-				.findFirst().
-				get().getLeft();
-		//@formatter:on
+				.filter(s -> s.getRight().getServiceInstanceId()
+						.equals(serviceInstanceId)).findFirst().get().getLeft();
+		// @formatter:on
 	}
 
 	public List<InstancePair> getProvisionedInstances() {
-		//@formatter:off
-		return instanceManager.getInstances()
-				.stream()
+		// @formatter:off
+		return instanceManager.getInstances().stream()
 				.map(i -> new InstancePair(sourceInstanceId, i.getLeft()))
 				.collect(Collectors.toList());
-		//@formatter:on
+		// @formatter:on
 	}
 
 	public String getSourceInstanceId() {
@@ -196,7 +214,17 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 
 					String copyId = sourceInstanceId;
 					if (COPY.equals(request.getPlanId())) {
-						copyId = provider.createCopy(sourceInstanceId);
+						copyId = copyProvider.createCopy(sourceInstanceId);
+						logger.info("Sanitizing copy " + copyId);
+						String script = dataProviderService.getScript();
+						Map<String, Object> creds = copyProvider
+								.getCreds(copyId);
+						// We need the machine to boot before this will work.
+						if (!hostUtils.waitForBoot(creds)) {
+							throw new TimeoutException(
+									"Host failed to boot in time alotted");
+						}
+						dataProvider.sanitize(script, creds);
 					}
 
 					instance.withLastOperation(new ServiceInstanceLastOperation(
@@ -213,7 +241,6 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 									+ e.getMessage(), FAILED);
 				}
 			}
-
 		});
 	}
 

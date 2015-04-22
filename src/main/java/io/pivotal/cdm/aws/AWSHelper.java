@@ -11,13 +11,17 @@ import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.AssociateAddressRequest;
 import com.amazonaws.services.ec2.model.CreateImageRequest;
 import com.amazonaws.services.ec2.model.CreateImageResult;
 import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
 import com.amazonaws.services.ec2.model.DeleteVolumeRequest;
 import com.amazonaws.services.ec2.model.DeregisterImageRequest;
+import com.amazonaws.services.ec2.model.DescribeAddressesResult;
 import com.amazonaws.services.ec2.model.DescribeImagesRequest;
 import com.amazonaws.services.ec2.model.DescribeImagesResult;
+import com.amazonaws.services.ec2.model.DescribeInstanceStatusRequest;
+import com.amazonaws.services.ec2.model.DescribeInstanceStatusResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeSnapshotsResult;
@@ -48,12 +52,12 @@ public class AWSHelper {
 		this.sourceInstanceId = sourceInstanceId;
 	}
 
-	public String getEC2InstanceIp(String instance) {
+	public String getEC2InstancePublicIp(String instance) {
 		DescribeInstancesResult result = ec2Client
 				.describeInstances(new DescribeInstancesRequest()
 						.withInstanceIds(instance));
 		return result.getReservations().get(0).getInstances().get(0)
-				.getPrivateIpAddress();
+				.getPublicIpAddress();
 	}
 
 	public void deregisterAMI(String ami) {
@@ -74,8 +78,9 @@ public class AWSHelper {
 	 * @param amiId
 	 *            to start
 	 * @return the id of the running instance.
+	 * @throws ServiceBrokerException
 	 */
-	public String startEC2Instance(String amiId) {
+	public String startEC2Instance(String amiId) throws ServiceBrokerException {
 		RunInstancesResult instance = ec2Client
 				.runInstances(new RunInstancesRequest().withImageId(amiId)
 						.withInstanceType("m1.small").withMinCount(1)
@@ -83,8 +88,50 @@ public class AWSHelper {
 						.withInstanceType(InstanceType.T2Micro));
 
 		String instanceId = getInstanceId(instance);
-		log.info("Started instance:" + instanceId);
+		addElasticIp(instanceId);
+		log.info("Instance " + instanceId + " started successfully");
 		return instanceId;
+	}
+
+	/**
+	 * Associate the next available elastic IP with an instance.
+	 * 
+	 * @param instanceId
+	 * @throws ServiceBrokerException
+	 */
+	public void addElasticIp(String instanceId) throws ServiceBrokerException {
+		AssociateAddressRequest addressRequest = new AssociateAddressRequest()
+				.withInstanceId(instanceId).withPublicIp(
+						getAvaliableElasticIp());
+		log.info("Associating " + addressRequest.getPublicIp()
+				+ " with instance " + instanceId);
+		if (waitForInstance(instanceId)) {
+			ec2Client.associateAddress(addressRequest);
+		} else {
+			throw new ServiceBrokerException(
+					"Instance did not transition to 'running' in alotted time.");
+		}
+	}
+
+	/**
+	 * Pull back a list of the elastic ip's that aren't attached to anything and
+	 * return the first one.
+	 * 
+	 * @return the first available IP.
+	 * @throws ServiceBrokerException
+	 */
+	public String getAvaliableElasticIp() throws ServiceBrokerException {
+		DescribeAddressesResult result = ec2Client.describeAddresses();
+		log.info("Found " + result.getAddresses().size() + " addresses!");
+		return result
+				.getAddresses()
+				.stream()
+				.filter(a -> null == a.getInstanceId())
+				.findAny()
+				.orElseThrow(
+						() -> new ServiceBrokerException(
+								"No elastic IP's avaliable!")).getPublicIp();
+
 	}
 
 	/**
@@ -173,19 +220,31 @@ public class AWSHelper {
 	}
 
 	private void deleteVolumeForSnap(String snap) {
+
+		waitForVolume(snap);
+		String volId = getVolume(snap).getVolumeId();
+		log.info("Deleting volume " + volId);
+		ec2Client.deleteVolume(new DeleteVolumeRequest().withVolumeId(volId));
+	}
+
+	private void waitForVolume(String snap) {
+		int retries = 0;
+		Volume vol = getVolume(snap);
+		while ("in-use".equals(vol.getState()) && retries < 5) {
+			log.error("Volume is still in use, sleeping 30");
+			sleep();
+			retries++;
+			vol = getVolume(snap);
+		}
+	}
+
+	private Volume getVolume(String snap) {
 		DescribeVolumesResult volumes = ec2Client
 				.describeVolumes(new DescribeVolumesRequest()
 						.withFilters(new Filter().withName("snapshot-id")
 								.withValues(snap)));
 
-		Volume vol = volumes.getVolumes().stream().findFirst().get();
-		if ("in-use".equals(vol.getState())) {
-			log.error("Volume is still in use, sleeping 30");
-			sleep();
-		}
-		log.info("Deleting volume " + vol.getVolumeId());
-		ec2Client.deleteVolume(new DeleteVolumeRequest().withVolumeId(vol
-				.getVolumeId()));
+		return volumes.getVolumes().stream().findFirst().get();
 	}
 
 	private boolean safeContains(Callable<String> s, String c) {
@@ -197,8 +256,31 @@ public class AWSHelper {
 		return false;
 	}
 
-	private boolean waitForImage(String imageId) {
+	private boolean waitForInstance(String instanceId) {
+		log.info("Waiting for instance to transition to running");
+		for (int i = 0; i < 5; ++i) {
 
+			DescribeInstanceStatusResult result = ec2Client
+					.describeInstanceStatus(new DescribeInstanceStatusRequest()
+							.withInstanceIds(instanceId));
+			if (!result.getInstanceStatuses().isEmpty()) {
+				String state = result.getInstanceStatuses().get(0)
+						.getInstanceState().getName();
+
+				log.info("Instance state is " + state);
+
+				if (state.equals("running")) {
+					return true;
+				}
+			}
+
+			sleep();
+
+		}
+		return false;
+	}
+
+	private boolean waitForImage(String imageId) {
 		for (int i = 0; i < 5; i++) {
 			String imageState = getImageState(imageId);
 			log.info("Image state is " + imageState);
@@ -213,7 +295,6 @@ public class AWSHelper {
 			}
 		}
 		return false;
-
 	}
 
 	private void sleep() {

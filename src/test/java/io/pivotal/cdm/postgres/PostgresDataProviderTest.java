@@ -5,6 +5,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import io.pivotal.cdm.provider.exception.DataProviderSanitizationFailedException;
 
 import java.sql.Connection;
@@ -29,30 +30,34 @@ public class PostgresDataProviderTest {
 
 	String script = "This is the script;";
 
+	private Map<String, Object> creds;
+
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
 		dataProvider = new PostgresDataProvider(executor);
-
+		creds = new HashMap<>();
+		creds.put("username", "username");
+		creds.put("password", "password");
+		creds.put("uri", "fake_uri");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void itShouldThrowIllegalArgumentForMissingUri()
 			throws DataProviderSanitizationFailedException {
-		Map<String, Object> creds = new HashMap<>();
-		creds.put("username", "username");
-		creds.put("password", "password");
-		// No URI!
+		creds.remove("uri");
+		dataProvider.sanitize("some-script", creds);
+	}
+
+	@Test
+	public void itShouldDoNothingForAZeroLengthScript() throws Exception {
 		dataProvider.sanitize("", creds);
+		verifyZeroInteractions(executor);
 	}
 
 	@Test
 	public void itShouldExecuteTheScript() throws SQLException,
 			DataProviderSanitizationFailedException {
-		Map<String, Object> creds = new HashMap<>();
-		creds.put("username", "username");
-		creds.put("password", "password");
-		creds.put("uri", "fake_uri");
 		dataProvider.sanitize(script, creds);
 		verify(executor, times(1)).execute(anyString(), any());
 	}
@@ -62,10 +67,13 @@ public class PostgresDataProviderTest {
 			throws Exception {
 		doThrow(new SQLException("Broken")).when(executor)
 				.execute(any(), any());
-		Map<String, Object> creds = new HashMap<>();
-		creds.put("username", "username");
-		creds.put("password", "password");
-		creds.put("uri", "fake_uri");
+
 		dataProvider.sanitize(script, creds);
+	}
+
+	@Test
+	public void itShouldDoNothingIfTheScriptIsNull() throws Exception {
+		dataProvider.sanitize(null, null);
+		verifyZeroInteractions(executor);
 	}
 }

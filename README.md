@@ -18,10 +18,11 @@ Access to AWS via an IAM user. The IAM key needs full EC2 access. The broker rel
 #Notes
 The approach where we take a snap of prod, then make an AMI, then mount it etc may be a little heavy handed. It works for a demo and POC, but in reality we should be leveraging snaps that created by some other schedule. 
 
+Also, this broker assumes a pool of free elastic IP's that it can pull from. If `describeAddresses` comes back with nothing we're in trouble. 
 
 #How the service broker works
 ##Catalog
-The catalog endpoint offers up two plans. <code>Production</code> works as any normal brokered connection to a database does. The broker injects credentials into your environment and then you change production data. <code>Copy</code> is more devious. This provisions a new VM and copy of the database from a snapshot. The credentials are then inserted, but the data and virtual machine live only as long as the binding lives. 
+The catalog endpoint offers up two plans. `Production` works as any normal brokered connection to a database does. The broker injects credentials into your environment and then you change production data. `Copy` is more devious. This provisions a new VM and copy of the database from a snapshot. The credentials are then inserted, but the data and virtual machine live only as long as the binding lives. 
 
 ##Provision
 If `plan_id` is set to `prod`, provision doesn't do much of anything. 

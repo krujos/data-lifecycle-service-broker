@@ -57,6 +57,11 @@ public class SanitizeIntegrationTest {
 				.statusCode(HttpStatus.OK.value()).and()
 				.body("script", equalTo(script));
 
+		input.put("script", "");
+		given().auth().basic(username, password).and()
+				.content(input.toJSONString()).and()
+				.contentType(ContentType.APPLICATION_JSON.toString())
+				.post(location).then().statusCode(HttpStatus.CREATED.value())
+				.and().header("Location", containsString(location));
 	}
-
 }

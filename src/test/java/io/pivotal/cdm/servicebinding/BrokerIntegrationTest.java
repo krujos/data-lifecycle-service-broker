@@ -2,12 +2,19 @@ package io.pivotal.cdm.servicebinding;
 
 import static com.jayway.restassured.RestAssured.given;
 import static io.pivotal.cdm.config.LCCatalogConfig.COPY;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import io.pivotal.cdm.CdmServiceBrokerApplication;
 import io.pivotal.cdm.repo.BindingRepository;
 
+import java.sql.SQLException;
+import java.util.Date;
+
+import net.minidev.json.JSONObject;
+
+import org.apache.http.entity.ContentType;
 import org.cloudfoundry.community.servicebroker.model.ServiceInstance;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,14 +24,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.util.json.JSONException;
-import com.amazonaws.util.json.JSONObject;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.builder.RequestSpecBuilder;
+import com.jayway.restassured.response.Response;
 import com.jayway.restassured.specification.RequestSpecification;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -63,8 +71,8 @@ public class BrokerIntegrationTest {
 	public void setUp() {
 		RestAssured.port = port;
 
-		RestAssured.requestSpecification = new RequestSpecBuilder()
-				.addHeader("X-Broker-Api-Version", "2.4").build();
+		RestAssured.requestSpecification = new RequestSpecBuilder().addHeader(
+				"X-Broker-Api-Version", "2.4").build();
 
 		bindingRepo.deleteAll();
 	}
@@ -86,7 +94,6 @@ public class BrokerIntegrationTest {
 				.then().statusCode(410);
 
 		validateBinding();
-
 		unprovisionAndUnbindCopy();
 
 		givenTheBroker()
@@ -94,6 +101,7 @@ public class BrokerIntegrationTest {
 				.then().statusCode(410);
 
 		validateNothingProvisioned();
+		deleteScript();
 	}
 
 	private void unprovisionAndUnbindCopy() throws Exception {
@@ -114,6 +122,7 @@ public class BrokerIntegrationTest {
 		validateNoBinding();
 		validateNothingProvisioned();
 
+		uploadScript();
 		JSONObject serviceInstance = new JSONObject();
 		serviceInstance.put("service_id", "lifecycle-sb");
 		serviceInstance.put("plan_id", COPY);
@@ -122,7 +131,8 @@ public class BrokerIntegrationTest {
 		givenTheBroker().and().contentType("application/json").and()
 				.body(serviceInstance.toString())
 				.put("/v2/service_instances/1234?accepts_incomplete=true")
-				.then().statusCode(202);
+				.then().statusCode(202).and()
+				.body("last_operation.state", equalTo("in progress"));
 
 		validateProvisioning();
 
@@ -130,13 +140,39 @@ public class BrokerIntegrationTest {
 		args.put("service_id", "postgrescmd");
 		args.put("plan_id", COPY);
 		args.put("app_guid", "app_guid");
-		givenTheBroker().and().contentType("application/json").and()
-				.content(args.toString()).and()
+		Response response = givenTheBroker().and()
+				.contentType("application/json").and().content(args.toString())
+				.and()
 				.put("/v2/service_instances/1234/service_bindings/1234521")
-				.then().statusCode(201);
+				.then().statusCode(201).and().extract().response();
 
 		validateBinding();
+		validateSanitization(response.getBody().as(JSONObject.class));
 		Thread.sleep(10000); // Let AWS get the machines moving;
+	}
+
+	private void uploadScript() {
+		int i = (int) (new Date().getTime() / 1000);
+		JSONObject input = new JSONObject();
+		String script = "insert into touched VALUES (" + i + ", 1);";
+		input.put("script", script);
+		String location = "/api/sanitizescript";
+		given().auth().basic(username, password).and()
+				.content(input.toJSONString()).and()
+				.contentType(ContentType.APPLICATION_JSON.toString())
+				.post(location).then().statusCode(HttpStatus.CREATED.value())
+				.and().header("Location", containsString(location));
+	}
+
+	private void deleteScript() {
+		JSONObject input = new JSONObject();
+		input.put("script", "");
+		String location = "/api/sanitizescript";
+		given().auth().basic(username, password).and()
+				.content(input.toJSONString()).and()
+				.contentType(ContentType.APPLICATION_JSON.toString())
+				.post(location).then().statusCode(HttpStatus.CREATED.value())
+				.and().header("Location", containsString(location));
 	}
 
 	private RequestSpecification givenTheBroker() {
@@ -145,17 +181,10 @@ public class BrokerIntegrationTest {
 
 	private void validateNothingProvisioned() throws Exception {
 		waitForDeProvisionCompletion();
-		//@formatter:off
-		givenTheBroker()
-			.get("/api/instances")
-			.then()
-			.body("$", hasSize(0));
+		givenTheBroker().get("/api/instances").then().body("$", hasSize(0));
 
-		givenTheBroker()
-			.get("/v2/service_instances/1234")
-			.then()
-			.statusCode(410);
-		//@formatter:on
+		givenTheBroker().get("/v2/service_instances/1234").then()
+				.statusCode(410);
 
 	}
 
@@ -165,49 +194,35 @@ public class BrokerIntegrationTest {
 	}
 
 	private void validateBinding() {
-		//@formatter:off
-		givenTheBroker()
-			.get("/api/bindings")
-			.then()
-			.body("[0].source", equalTo("app_guid"))
-			.and()
-			.body("[0].copy", notNullValue())
-			.and()
-			.body("$", hasSize(1));
-		//@formatter:on
+		givenTheBroker().get("/api/bindings").then()
+				.body("[0].source", equalTo("app_guid")).and()
+				.body("[0].copy", notNullValue()).and().body("$", hasSize(1));
 	}
 
 	private void validateProvisioning() throws JSONException,
-			InterruptedException {
+			InterruptedException, SQLException {
 
 		// Because the provision is async we have to give it some time
 		// to happen. We poll here and check it's state.
-		//@formatter:off
 
-		givenTheBroker().get("/v2/service_instances/1234")
-			.then()
-			.body("last_operation.state", equalTo("in progress"))
-			.and()
-			.statusCode(200);
+		givenTheBroker().get("/v2/service_instances/1234").then()
+				.body("last_operation.state", equalTo("in progress")).and()
+				.statusCode(200);
 
 		waitForProvisionCompletion();
-		
-		givenTheBroker()
-			.get("/api/instances")
-			.then()
-			.body("[0].source", equalTo(sourceInstanceId))
-			.and()
-			.body("[0].copy", notNullValue())
-			.and()
-			.body("$", hasSize(1));
-		
-		givenTheBroker()
-			.get("/v2/service_instances/1234")
-			.then()
-			.body("last_operation.state", equalTo("succeeded"))
-			.and()
-			.statusCode(200);
-		//@formatter:on
+
+		givenTheBroker().get("/api/instances").then()
+				.body("[0].source", equalTo(sourceInstanceId)).and()
+				.body("[0].copy", notNullValue()).and().body("$", hasSize(1));
+
+		givenTheBroker().get("/v2/service_instances/1234").then()
+				.body("last_operation.state", equalTo("succeeded")).and()
+				.statusCode(200);
+	}
+
+	private void validateSanitization(JSONObject response) throws SQLException {
+		// Connection conn = DriverManager.getConnection(postgresUri);
+		System.out.println("HELLO!!!!! " + response.toJSONString());
 	}
 
 	private void waitForProvisionCompletion() throws InterruptedException {
@@ -223,7 +238,7 @@ public class BrokerIntegrationTest {
 			}
 			Thread.sleep(3000);
 			++retries;
-		} while (retries != 30); // 90 seconds
+		} while (retries != 120); // 360 seconds
 	}
 
 	private void waitForDeProvisionCompletion() throws InterruptedException {

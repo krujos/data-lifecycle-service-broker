@@ -68,16 +68,21 @@ public class AWSCopyProvider implements CopyProvider {
 		}
 		Map<String, Object> newCreds = new HashMap<>(creds);
 
-		String instanceIp = aws.getEC2InstanceIp(instance);
+		String instanceIp = aws.getEC2InstancePublicIp(instance);
 		String pgURI = (String) creds.get("uri");
 
+		pgURI = pgURI.replace("jdbc:", "");
+
 		try {
-			newCreds.put("uri",
-					pgURI.replace(new URI(pgURI).getHost(), instanceIp));
+			newCreds.put(
+					"uri",
+					"jdbc:"
+							+ pgURI.replace(new URI(pgURI).getHost(),
+									instanceIp));
 		} catch (URISyntaxException e) {
+			log.error("Bad URI!!" + pgURI);
 			throw new ServiceBrokerException(e);
 		}
 		return newCreds;
 	}
-
 }
