@@ -225,6 +225,10 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 									"Host failed to boot in time alotted");
 						}
 						dataProvider.sanitize(script, creds);
+					} else {
+						// Let the async stuff catch up, if we're done too fast
+						// CC freaks out.
+						Thread.sleep(1000);
 					}
 
 					instance.withLastOperation(new ServiceInstanceLastOperation(

@@ -8,8 +8,8 @@ public interface DataProvider {
 
 	/**
 	 * Sanitize the data source with the incoming script. This method is called
-	 * upon bind and typically removes or modifies sensitive data from the
-	 * database. This method is always called in order to ensure the sanatize
+	 * upon provision and typically removes or modifies sensitive data from the
+	 * database. This method is always called in order to ensure the sanitize
 	 * point has a chance to perform operations which my not be scripted.
 	 *
 	 * Creds are obtained from the CopyProvider after creating a copy, so the
