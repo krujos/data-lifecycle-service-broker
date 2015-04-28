@@ -1,6 +1,7 @@
 package io.pivotal.cdm.service;
 
 import static io.pivotal.cdm.config.LCCatalogConfig.COPY;
+import static io.pivotal.cdm.config.LCCatalogConfig.PRODUCTION;
 import static io.pivotal.cdm.model.BrokerActionState.COMPLETE;
 import static io.pivotal.cdm.model.BrokerActionState.FAILED;
 import static io.pivotal.cdm.model.BrokerActionState.IN_PROGRESS;
@@ -93,15 +94,60 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 		throwIfDuplicate(id);
 		throwIfSync(request);
 
-		ServiceInstance instance = new ServiceInstance(request).isAsync(true)
-				.withLastOperation(
-						new ServiceInstanceLastOperation("Creating instance",
-								OperationState.IN_PROGRESS));
+		ServiceInstance instance = null;
 
-		instanceManager.saveInstance(instance, null);
-		provision(request, id, instance);
+		if (PRODUCTION.equals(request.getPlanId())) {
+			instance = new ServiceInstance(request).isAsync(false)
+					.withLastOperation(
+							new ServiceInstanceLastOperation("Provisioned",
+									OperationState.SUCCEEDED));
+			instanceManager.saveInstance(instance, sourceInstanceId);
+		} else {
+			instance = new ServiceInstance(request).isAsync(true)
+					.withLastOperation(
+							new ServiceInstanceLastOperation(
+									"Creating instance",
+									OperationState.IN_PROGRESS));
+			instanceManager.saveInstance(instance, null);
+			provision(request, id, instance);
+		}
 		return instance;
+	}
 
+	private void provision(CreateServiceInstanceRequest request, String id,
+			ServiceInstance instance) {
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+
+					String copyId = sourceInstanceId;
+					copyId = copyProvider.createCopy(sourceInstanceId);
+					logger.info("Sanitizing copy " + copyId);
+					String script = dataProviderService.getScript();
+					Map<String, Object> creds = copyProvider.getCreds(copyId);
+					// We need the machine to boot before this will work.
+					if (!hostUtils.waitForBoot(creds)) {
+						throw new TimeoutException(
+								"Host failed to boot in time alotted");
+					}
+					dataProvider.sanitize(script, creds);
+
+					instance.withLastOperation(new ServiceInstanceLastOperation(
+							"Provisioned", OperationState.SUCCEEDED));
+					instanceManager.saveInstance(instance, copyId);
+
+					log(id, "Created service instance", COMPLETE);
+				} catch (Exception e) {
+					instance.withLastOperation(new ServiceInstanceLastOperation(
+							e.getMessage(), OperationState.FAILED));
+					instanceManager.saveInstance(instance, null);
+					log(id,
+							"Failed to create service instance: "
+									+ e.getMessage(), FAILED);
+				}
+			}
+		});
 	}
 
 	@Override
@@ -203,49 +249,6 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 			logger.info(logMsg);
 		}
 		brokerRepo.save(new BrokerAction(id, state, msg));
-	}
-
-	private void provision(CreateServiceInstanceRequest request, String id,
-			ServiceInstance instance) {
-		executor.execute(new Runnable() {
-			@Override
-			public void run() {
-				try {
-
-					String copyId = sourceInstanceId;
-					if (COPY.equals(request.getPlanId())) {
-						copyId = copyProvider.createCopy(sourceInstanceId);
-						logger.info("Sanitizing copy " + copyId);
-						String script = dataProviderService.getScript();
-						Map<String, Object> creds = copyProvider
-								.getCreds(copyId);
-						// We need the machine to boot before this will work.
-						if (!hostUtils.waitForBoot(creds)) {
-							throw new TimeoutException(
-									"Host failed to boot in time alotted");
-						}
-						dataProvider.sanitize(script, creds);
-					} else {
-						// Let the async stuff catch up, if we're done too fast
-						// CC freaks out.
-						Thread.sleep(1000);
-					}
-
-					instance.withLastOperation(new ServiceInstanceLastOperation(
-							"Provisioned", OperationState.SUCCEEDED));
-					instanceManager.saveInstance(instance, copyId);
-
-					log(id, "Created service instance", COMPLETE);
-				} catch (Exception e) {
-					instance.withLastOperation(new ServiceInstanceLastOperation(
-							e.getMessage(), OperationState.FAILED));
-					instanceManager.saveInstance(instance, null);
-					log(id,
-							"Failed to create service instance: "
-									+ e.getMessage(), FAILED);
-				}
-			}
-		});
 	}
 
 	private void throwIfDuplicate(String id)

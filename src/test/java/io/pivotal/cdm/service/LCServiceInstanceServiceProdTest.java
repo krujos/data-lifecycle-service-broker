@@ -4,6 +4,7 @@ import static io.pivotal.cdm.config.LCCatalogConfig.COPY;
 import static io.pivotal.cdm.config.LCCatalogConfig.PRODUCTION;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -117,7 +118,7 @@ public class LCServiceInstanceServiceProdTest {
 	@Test
 	public void itShouldDocumentItsInFlightCreateActions() throws Exception {
 		createServiceInstance();
-		verify(brokerRepo, times(2)).save(any(BrokerAction.class));
+		verify(brokerRepo, times(1)).save(any(BrokerAction.class));
 	}
 
 	@Test
@@ -125,7 +126,7 @@ public class LCServiceInstanceServiceProdTest {
 		createServiceInstance();
 		service.deleteServiceInstance(new DeleteServiceInstanceRequest(instance
 				.getServiceInstanceId(), "serviceId", PRODUCTION, true));
-		verify(brokerRepo, times(4)).save(any(BrokerAction.class));
+		verify(brokerRepo, times(3)).save(any(BrokerAction.class));
 	}
 
 	@Test(expected = ServiceInstanceUpdateNotSupportedException.class)
@@ -133,5 +134,12 @@ public class LCServiceInstanceServiceProdTest {
 		createServiceInstance();
 		service.updateServiceInstance(new UpdateServiceInstanceRequest(COPY,
 				true).withInstanceId(instance.getServiceInstanceId()));
+	}
+
+	@Test
+	public void itShouldBeASynchronousOperation() throws Exception {
+		createServiceInstance();
+
+		assertFalse(instance.isAsync());
 	}
 }
