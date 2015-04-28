@@ -29,7 +29,7 @@ public class AWSCopyProviderTest {
 	@Mock
 	private AmazonEC2Client ec2Client;
 
-	private String pgURI = "jdbc:postgres://10.10.10.10:5432/testdb";
+	private String pgURI = "postgres://10.10.10.10:5432/testdb";
 
 	@Before
 	public void setUp() throws ServiceBrokerException, TimeoutException {
@@ -68,7 +68,7 @@ public class AWSCopyProviderTest {
 			throws ServiceBrokerException {
 		when(aws.getEC2InstancePublicIp("test_instance")).thenReturn("2.2.2.2");
 		Map<String, Object> creds = provider.getCreds("test_instance");
-		assertThat("jdbc:postgres://2.2.2.2:5432/testdb",
+		assertThat("postgres://2.2.2.2:5432/testdb",
 				is(equalTo(creds.get("uri"))));
 	}
 

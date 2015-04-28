@@ -10,13 +10,15 @@ import java.net.URISyntaxException;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
 
 public class HostUtils {
 	private Logger logger = Logger.getLogger(HostUtils.class);
 
-	public boolean waitForBoot(Map<String, Object> creds) {
+	public boolean waitForBoot(Map<String, Object> creds)
+			throws ServiceBrokerException {
 		try {
-			URI uri = new URI(((String) creds.get("uri")).replace("jdbc:", ""));
+			URI uri = new URI(((String) creds.get("uri")));
 			int port = uri.getPort();
 			String host = uri.getHost();
 			logger.info("Waiting for " + host + " to boot.");
@@ -25,8 +27,8 @@ public class HostUtils {
 					try {
 						Thread.sleep(20000);
 					} catch (InterruptedException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						throw new ServiceBrokerException(
+								"Internal Error! Something went wrong sleeping the threads!");
 					}
 					logger.info("Attempting to connect to " + host
 							+ " on port " + port);
@@ -46,8 +48,8 @@ public class HostUtils {
 				}
 			}
 		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new ServiceBrokerException(
+					"Bad URI, check your environment variables");
 		}
 		return false;
 	}

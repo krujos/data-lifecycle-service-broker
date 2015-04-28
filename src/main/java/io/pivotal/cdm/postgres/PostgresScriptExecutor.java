@@ -16,7 +16,7 @@ public class PostgresScriptExecutor {
 			throws SQLException {
 		String username = (String) creds.get("username");
 		String password = (String) creds.get("password");
-		String uri = (String) creds.get("uri");
+		String uri = "jdbc:" + (String) creds.get("uri");
 		log.info("Sanitizing " + uri + " " + " as " + username);
 		Connection connection = DriverManager.getConnection(uri, username,
 				password);
