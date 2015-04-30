@@ -11,11 +11,9 @@ import io.pivotal.cdm.model.BrokerActionState;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.provider.DataProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
-import io.pivotal.cdm.utils.HostUtils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -61,8 +59,6 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 
 	private DataProviderService dataProviderService;
 
-	private HostUtils hostUtils;
-
 	@Autowired
 	public LCServiceInstanceService(
 			final CopyProvider copyProvider,
@@ -71,8 +67,7 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 			final BrokerActionRepository brokerRepo,
 			final LCServiceInstanceManager instanceManager,
 			final TaskExecutor executor,
-			final DataProviderService dataProviderService,
-			final HostUtils hostUtils) {
+			final DataProviderService dataProviderService) {
 		this.copyProvider = copyProvider;
 		this.dataProvider = dataProvider;
 		this.sourceInstanceId = sourceInstanceId;
@@ -80,7 +75,6 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 		this.instanceManager = instanceManager;
 		this.executor = executor;
 		this.dataProviderService = dataProviderService;
-		this.hostUtils = hostUtils;
 	}
 
 	@Override
@@ -126,11 +120,6 @@ public class LCServiceInstanceService implements ServiceInstanceService {
 					logger.info("Sanitizing copy " + copyId);
 					String script = dataProviderService.getScript();
 					Map<String, Object> creds = copyProvider.getCreds(copyId);
-					// We need the machine to boot before this will work.
-					if (!hostUtils.waitForBoot(creds)) {
-						throw new TimeoutException(
-								"Host failed to boot in time alotted");
-					}
 					dataProvider.sanitize(script, creds);
 
 					instance.withLastOperation(new ServiceInstanceLastOperation(

@@ -3,6 +3,7 @@ package io.pivotal.cdm.config;
 import io.pivotal.cdm.aws.AWSCopyProvider;
 import io.pivotal.cdm.aws.AWSHelper;
 import io.pivotal.cdm.provider.CopyProvider;
+import io.pivotal.cdm.utils.HostUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,11 +27,17 @@ class AWSCopyProviderConfig {
 	private String subnetId;
 	@Autowired
 	private AmazonEC2Client ec2Client;
+	@Autowired
+	private HostUtils hostUtils;
+
+	@Value("#{environment.BOOT_CHECK_PORT}")
+	private int bootCheckPort;
 
 	@Bean
 	CopyProvider copyProvider() {
 		return new AWSCopyProvider(new AWSHelper(ec2Client, subnetId,
-				sourceInstance), username, password, uri, sourceInstance);
+				sourceInstance, hostUtils, bootCheckPort), username, password,
+				uri, sourceInstance);
 
 	}
 }

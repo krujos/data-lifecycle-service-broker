@@ -18,7 +18,6 @@ import io.pivotal.cdm.model.BrokerAction;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.provider.DataProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
-import io.pivotal.cdm.utils.HostUtils;
 
 import java.util.Collections;
 
@@ -57,9 +56,6 @@ public class LCServiceInstanceServiceProdTest {
 	@Mock
 	private DataProviderService dataProviderService;
 
-	@Mock
-	private HostUtils hostUtils;
-
 	// TODO DRY w/ copy test
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
@@ -67,7 +63,7 @@ public class LCServiceInstanceServiceProdTest {
 		MockitoAnnotations.initMocks(this);
 		service = new LCServiceInstanceService(copyProvider, dataProvider,
 				"source_instance_id", brokerRepo, instanceManager,
-				new SyncTaskExecutor(), dataProviderService, hostUtils);
+				new SyncTaskExecutor(), dataProviderService);
 
 	}
 

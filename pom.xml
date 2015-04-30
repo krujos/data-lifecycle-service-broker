@@ -40,9 +40,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.cloudfoundry</groupId>
+			<groupId>com.github.krujos</groupId>
 			<artifactId>spring-boot-cf-service-broker</artifactId>
-			<version>2.4.1</version>
+			<version>56b49ff3d12d151c0955728ba41cb01328e8176a</version>
 		</dependency>
 		<dependency>
 			<groupId>org.cloudfoundry</groupId>

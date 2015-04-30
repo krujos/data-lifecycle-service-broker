@@ -18,7 +18,6 @@ import io.pivotal.cdm.dto.InstancePair;
 import io.pivotal.cdm.provider.CopyProvider;
 import io.pivotal.cdm.provider.DataProvider;
 import io.pivotal.cdm.repo.BrokerActionRepository;
-import io.pivotal.cdm.utils.HostUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,16 +65,13 @@ public class LCServiceInstanceServiceCopyTest {
 	@Mock
 	private DataProviderService dataProviderService;
 
-	@Mock
-	private HostUtils hostUtils;
-
 	@Before
 	public void setUp() throws ServiceInstanceExistsException,
 			ServiceBrokerException {
 		MockitoAnnotations.initMocks(this);
 		service = new LCServiceInstanceService(copyProvider, dataProvider,
 				"source_instance_id", brokerRepo, instanceManager,
-				new SyncTaskExecutor(), dataProviderService, hostUtils);
+				new SyncTaskExecutor(), dataProviderService);
 
 	}
 
@@ -99,7 +95,6 @@ public class LCServiceInstanceServiceCopyTest {
 	public void itShouldStoreWhatItCreates()
 			throws ServiceInstanceExistsException, ServiceBrokerException,
 			ServiceBrokerAsyncRequiredException {
-		when(hostUtils.waitForBoot(any())).thenReturn(true);
 		createServiceInstance();
 		assertThat(instance.getServiceInstanceLastOperation().getState(),
 				is(equalTo("succeeded")));
@@ -115,7 +110,6 @@ public class LCServiceInstanceServiceCopyTest {
 
 	@Test
 	public void itShouldSanitizeACopy() throws Exception {
-		when(hostUtils.waitForBoot(any())).thenReturn(true);
 		createServiceInstance();
 		verify(dataProvider).sanitize(anyString(), any());
 	}

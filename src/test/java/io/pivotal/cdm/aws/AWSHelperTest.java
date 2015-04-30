@@ -6,9 +6,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.krujos.test.aws.request.AWSRequestMatcher.awsRqst;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import io.pivotal.cdm.utils.HostUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,10 +62,14 @@ public class AWSHelperTest {
 			.withReservation(new Reservation().withInstances(Collections
 					.singletonList(instance)));
 
+	@Mock
+	private HostUtils hostUtils;
+
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
-		aws = new AWSHelper(ec2Client, "test_subnet", "source_instance");
+		aws = new AWSHelper(ec2Client, "test_subnet", "source_instance",
+				hostUtils, 5432);
 	}
 
 	@Test
@@ -100,6 +107,8 @@ public class AWSHelperTest {
 								.singleton(new InstanceStatus()
 										.withInstanceState(new InstanceState()
 												.withName("running")))));
+
+		when(hostUtils.waitForBoot(anyString(), anyInt())).thenReturn(true);
 		assertThat(aws.startEC2Instance("test_image"),
 				is(equalTo("test_instance")));
 	}

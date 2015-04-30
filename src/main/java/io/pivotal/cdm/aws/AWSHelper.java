@@ -1,5 +1,7 @@
 package io.pivotal.cdm.aws;
 
+import io.pivotal.cdm.utils.HostUtils;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -8,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.cloudfoundry.community.servicebroker.exception.ServiceBrokerException;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.AssociateAddressRequest;
@@ -44,12 +45,17 @@ public class AWSHelper {
 
 	private String sourceInstanceId;
 
-	@Autowired
+	private HostUtils hostUtils;
+
+	private int bootCheckPort;
+
 	public AWSHelper(AmazonEC2Client ec2Client, String subnetId,
-			String sourceInstanceId) {
+			String sourceInstanceId, HostUtils hostUtils, int bootCheckPort) {
 		this.ec2Client = ec2Client;
 		this.subnetId = subnetId;
 		this.sourceInstanceId = sourceInstanceId;
+		this.hostUtils = hostUtils;
+		this.bootCheckPort = bootCheckPort;
 	}
 
 	public String getEC2InstancePublicIp(String instance) {
@@ -110,6 +116,12 @@ public class AWSHelper {
 		} else {
 			throw new ServiceBrokerException(
 					"Instance did not transition to 'running' in alotted time.");
+		}
+		// We need the machine to boot before this will work.
+		// TODO Inject port
+		if (!hostUtils.waitForBoot(addressRequest.getPublicIp(), bootCheckPort)) {
+			throw new ServiceBrokerException(
+					"Host failed to boot in time alotted");
 		}
 	}
 

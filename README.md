@@ -49,14 +49,16 @@ export SECURITY_USER_NAME=user
 export SECURITY_USER_PASSWORD=password
 export PROD_DB_PASSWORD=postgres
 export PROD_DB_USER=postgres
-export PROD_DB_URI jdbc:postgres://10.10.10.10:5432/testdb
+export PROD_DB_URI postgresql://10.10.10.10:5432/testdb
 export SECURITY_USER_NAME=user
 export SECURITY_USER_PASSWORD=pass
 export SOURCE_INSTANCE_ID=i-xxxxxxx
 export SUBNET_ID=subnet-XXXXXX
+export BOOT_CHECK_PORT=5432
 ```
 
-The `jdbc:` bit in the prod DB URI is a but that hasn't been fixed yet. It's there because the `DriverManager` needs it as a hint for what driver to load... To be removed. 
+`BOOT_CHECK_PORT` is the port that we will try to open a socket connection to to see if the machine is up and booted. If it responds on this port we hand the copy off and say it's good to go. `5432` is the default postgres port, make sure your security groups allow ingress on this port!
+
 
 After you've exported all that push the app from the same directory as `manifest.yml`. The manifest assumes you've provisioned a database instance from the marketplace and named it `lifecycle-sb-db`. 
 
