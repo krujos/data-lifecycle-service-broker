@@ -138,6 +138,7 @@
 				<directory>${basedir}</directory>
 				<includes>
 					<include>set-cf-env.sh</include>
+					<include>manifest.yml</include>
 				</includes>
 			</resource>
 		</resources>
