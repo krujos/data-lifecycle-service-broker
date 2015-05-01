@@ -1,5 +1,5 @@
 #!/bin/sh
-APPNAME=`grep name manifest.yml | awk '{print $3}'`
+APPNAME=${APPNAME:-`grep name manifest.yml | awk '{print $3}'`}
 cf set-env $APPNAME AWS_ACCESS_KEY_ID $AWS_ACCESS_KEY_ID
 cf set-env $APPNAME AWS_SECRET_ACCESS_KEY $AWS_SECRET_ACCESS_KEY
 cf set-env $APPNAME PROD_DB_PASSWORD $PROD_DB_PASSWORD
