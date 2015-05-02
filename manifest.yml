@@ -6,6 +6,6 @@ applications:
   path: target/cdm-service-broker-0.0.1-SNAPSHOT.jar
   services:
     - lifecycle-sb-db
-	- log-svc
+    - log-svc
   env:
     SPRING_PROFILES_ACTIVE: cloud
