@@ -76,7 +76,8 @@ public class AWSHelperTest {
 	public void itShouldCreateAnAMI() throws Exception {
 		when(
 				ec2Client.createImage(awsRqst(r -> r.getInstanceId().equals(
-						"test_source_instance")))).thenReturn(
+						"test_source_instance")
+						&& true == r.getNoReboot()))).thenReturn(
 				new CreateImageResult().withImageId("test_image"));
 
 		when(

@@ -168,7 +168,8 @@ public class AWSHelper {
 						.withDescription(description)
 						.withName(
 								sourceInstance + "-"
-										+ System.currentTimeMillis()));
+										+ System.currentTimeMillis())
+						.withNoReboot(true));
 
 		String amiId = imageResult.getImageId();
 		if (!waitForImage(amiId)) {
