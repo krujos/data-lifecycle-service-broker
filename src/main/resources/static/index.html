@@ -10,62 +10,10 @@
     <h1>All copies are provisioned from instance <span id="source-instance">{{sourceInstance}}</span></h1>
 </div>
 
-<div ng-controller="ProvisionedInstanceController" id="service-instances">
-    <h2>Provisioned Copies</h2>
-    <table>
-        <thead><tr><th>Source ID</th><th>Copy ID</th><th>Plan</th></tr></thead>
-        <tr ng-repeat="i in provisionedInstances">
-            <td>{{i.source}}</td>
-            <td>{{i.copy}}</td>
-            <td ng-if="i.source!=i.copy">Copy</td>
-            <td ng-if="i.source==i.copy">Production</td>
-        </tr>
-    </table>
-</div>
-
-<div ng-controller="BoundAppController" id="bound-apps" >
-    <h2>Bound Application Instances</h2>
-    <table>
-        <thead><tr><th>App ID</th><th>Copy ID</th></tr></thead>
-        <tr ng-repeat="i in boundInstances">
-            <td>{{i.source}}</td>
-            <td>{{i.copy}}</td>
-        </tr>
-    </table>
-</div>
-
-<div ng-controller="SearchController" id="operations">
-    <h2>Operations in flight</h2>
-    <table>
-        <thead><tr><th>Id</th><th>Current Action</th></tr></thead>
-        <tr ng-repeat="i in inProgress">
-            <td>{{i.actor}}</td>
-            <td>{{i.action}}</td>
-        </tr>
-    </table>
-
-    <h2>Failed Operations</h2>
-    <table>
-        <thead><tr><th>Id</th><th>Current Action</th></tr></thead>
-        <tr ng-repeat="i in failed">
-            <td>{{i.actor}}</td>
-            <td>{{i.action}}</td>
-        </tr>
-    </table>
-
-    <h2>Complete Operations</h2>
-    <table>
-        <thead><tr><th>Id</th><th>Current Action</th></tr></thead>
-        <tr ng-repeat="i in complete">
-            <td>{{i.actor}}</td>
-            <td>{{i.action}}</td>
-        </tr>
-    </table>
-</div>
-
 <div ng-controller="SanitizeController">
 	<h2>Sanitize Script</h2>
 	<textarea ng-model="script" rows="50" cols="80"></textarea>
+	<br>
 	<button type="button" ng-click="save()">Save!</button>
 </div>
 </body>

@@ -6,5 +6,4 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 
 public interface ServiceInstanceRepo extends
 		PagingAndSortingRepository<ServiceInstanceEntity, String> {
-
 }
