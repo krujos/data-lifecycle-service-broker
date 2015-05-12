@@ -25,4 +25,6 @@ public interface DataProvider {
 	 */
 	void sanitize(String script, Map<String, Object> creds)
 			throws DataProviderSanitizationFailedException;
+			
+	//TODO Password change is implicit in above, explicit api?
 }
