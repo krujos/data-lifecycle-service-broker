@@ -80,7 +80,9 @@ cf start lifecycle-sb
 
 
 #Console
-There's a console that gives you an overview of what the service broker is doing running at ```<sb_url>/```. So if you deployed to ```http://broker.cfapps.io/``` you would see the console at that address. The console is primitive, but it does tell you what EC2 instances are running and you can track backwards to find resources if needed. It will show inflight operations too, as those can be a bit hard to track.
+There's a console that lets you enter the sanitize script at ```<sb_url>/```. So if you deployed to ```http://broker.cfapps.io/``` you would see the console at that address. The console is primitive, and I need a better strategy for consuming that script (Point to a repo?). 
+
+There are some endpints to tell you what EC2 instances are running and you can track backwards to find resources if needed. They also see inflight operations. Take a peek at the [`/main/java/io/pivotal/cdm/controller/StatusController.java`](https://github.com/krujos/data-lifecycle-service-broker/blob/master/src/main/java/io/pivotal/cdm/controller/StatusController.java)
 
 #Tests
 This project separates unit and integration tests by using the maven surefire and failsafe plugins. The integration tests need environment variables described in the deployment section.
