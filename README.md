@@ -115,7 +115,7 @@ For example:
 	}
 ```
 
-There's tests suites that search for the presence, or lack of the annotation to decide which kind of test it is. In eclipse I have run configur
+There's tests suites that search for the presence, or lack of the annotation to decide which kind of test it is. In eclipse I have run configuration for each. The integration configuration needs the envornment variables mentioned above to run.
 
 #TODO
 There's a tracker [here](https://www.pivotaltracker.com/n/projects/1275196). My current priroiry list is something along the lines of: 
