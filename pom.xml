@@ -3,8 +3,6 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>io.pivotal</groupId>
-	<artifactId>cdm-service-broker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
@@ -192,4 +190,6 @@
 			</plugin>
 		</plugins>
 	</build>
+	<groupId>org.cloudfoundry.community</groupId>
+	<artifactId>data-lifecycle-broker</artifactId>
 </project>
