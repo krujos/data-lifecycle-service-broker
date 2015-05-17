@@ -117,7 +117,6 @@ public class AWSHelper {
 					"Instance did not transition to 'running' in alotted time.");
 		}
 		// We need the machine to boot before this will work.
-		// TODO Inject port
 		if (!hostUtils.waitForBoot(addressRequest.getPublicIp(), bootCheckPort)) {
 			throw new ServiceBrokerException(
 					"Host failed to boot in time alotted");
