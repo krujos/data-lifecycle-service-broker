@@ -92,7 +92,7 @@ From the command line:
 	$ mvn integration-test #integration tests
 ```
 
-Eclipse / Intellij targets can be setup by pointing at ```src/test/java/io/pivotal/cdm/UnitTests.java``` and ```src/test/java/io/pivotal/cdm/IntegrationTests.java```. Integration tests will need the environment variables setup to function. 
+Eclipse / Intellij targets can be setup by pointing at ```src/test/java/org/cloudfoundry/community/servicebroker/datalifecycle/UnitTests.java``` and ```src/test/java/org/cloudfoundry/community/servicebroker/datalifecycle/IntegrationTests.java```. Integration tests will need the environment variables setup to function. 
 
 The broker API needs a username and password to service API calls. Both the broker and test source these out of the environment, so you can use whatever you want for both values. The AWS variables should come from an IAM user. These tests will start and stop VM's, as well as create and delete snapshots and AMI's in AWS. 
 
