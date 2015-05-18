@@ -190,6 +190,6 @@
 			</plugin>
 		</plugins>
 	</build>
-	<groupId>org.cloudfoundry.community.data-lifecycle-broker</groupId>
-	<artifactId>data-lifecycle-broker</artifactId>
+	<groupId>org.cloudfoundry.community.data-lifecycle-service-broker</groupId>
+	<artifactId>data-lifecycle-service-broker</artifactId>
 </project>
