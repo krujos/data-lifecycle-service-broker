@@ -191,5 +191,5 @@
 	</build>
 	<groupId>org.cloudfoundry.community.data-lifecycle-service-broker</groupId>
 	<artifactId>data-lifecycle-service-broker</artifactId>
-	<description>Data Lifecycle Service Broker Framework. </description>
+	<description>Data Lifecycle Service Broker Framework. Starter for making your own data broker.</description>
 </project>
