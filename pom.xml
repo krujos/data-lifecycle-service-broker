@@ -6,8 +6,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>cdm-service-broker</name>
-	<description>Service Broker for Postgres CDM solution</description>
+	<name>data-lifecycle-service-broker</name>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -18,7 +17,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<start-class>io.pivotal.cdm.CdmServiceBrokerApplication</start-class>
+		<start-class>org.cloudfoundry.community.servicebroker.datalifecycle.DataLifecycleBrokerApplication</start-class>
 		<java.version>1.8</java.version>
 		<powermock.version>1.6.2</powermock.version>
 	</properties>
@@ -192,4 +191,5 @@
 	</build>
 	<groupId>org.cloudfoundry.community.data-lifecycle-service-broker</groupId>
 	<artifactId>data-lifecycle-service-broker</artifactId>
+	<description>Data Lifecycle Service Broker Framework. </description>
 </project>
