@@ -163,6 +163,7 @@
 					</includes>
 				</configuration>
 			</plugin>
+			<!-- 
 			<plugin>
 				<artifactId>
 					maven-failsafe-plugin
@@ -187,6 +188,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			 -->
 		</plugins>
 	</build>
 	<groupId>org.cloudfoundry.community.data-lifecycle-service-broker</groupId>
